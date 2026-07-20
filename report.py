@@ -251,7 +251,7 @@ def print_report(result: ScanResult):
     cards = _build_stat_cards(result)
     if cards:
         print(f"{'─'*W}")
-        print("KEY METRICS:")
+        print("核心指标:")
         print(f"{'─'*W}")
         c_map = {
             "#dc2626": Fore.RED + Style.BRIGHT,
@@ -264,7 +264,7 @@ def print_report(result: ScanResult):
             print(f"  {card['label']:<38}{col}{card['value']:<8}{Style.RESET_ALL} ({card['sub']})")
 
     print(f"\n{'─'*W}")
-    print("FINDINGS (sorted by severity):")
+    print("风险隐患清单（按危险等级排序）:")
     print(f"{'─'*W}\n")
 
     for f in result.findings_by_severity():
@@ -288,7 +288,7 @@ def print_report(result: ScanResult):
     inventory = result.stats.get("adcs_template_inventory", [])
     if inventory:
         print(f"{'─'*W}")
-        print("ADCS TEMPLATE INVENTORY:")
+        print("ADCS 证书模板清单:")
         print(f"{'─'*W}")
         for entry in inventory:
             name, status = entry.split(": ", 1)
@@ -301,44 +301,44 @@ def print_report(result: ScanResult):
 
     s = result.stats
     print(f"{'─'*W}")
-    print("ADDITIONAL CHECK SUMMARY:")
+    print("附加检测汇总:")
     print(f"{'─'*W}")
     # Original stats
-    _cs("Deprecated OS computers",          s.get("deprecated_os_count"))
-    _cs("Unconstrained deleg. (computers)", s.get("unconstrained_delegation_computers"))
-    _cs("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"))
-    _cs("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"))
-    _cs("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"), warn_above=-1)
-    _cs("LAPS missing (non-DC hosts)",      s.get("laps_missing"))
+    _cs("已停止支持操作系统的计算机",         s.get("deprecated_os_count"))
+    _cs("无约束委派（计算机对象）",           s.get("unconstrained_delegation_computers"))
+    _cs("无约束委派（用户账号）",             s.get("unconstrained_delegation_users"))
+    _cs("约束委派（协议转换模式）",           s.get("constrained_delegation_proto_transition"))
+    _cs("受限委托（标准）",                  s.get("constrained_delegation_standard"), warn_above=-1)
+    _cs("未部署 LAPS 的非域控主机",          s.get("laps_missing"))
     laps_t = s.get("laps_total_hosts")
     if laps_t:
         pct = int(100 * (s.get("laps_covered") or 0) / laps_t)
         col = Fore.GREEN if pct==100 else (Fore.YELLOW if pct>=80 else Fore.RED+Style.BRIGHT)
         print(f"  {'LAPS coverage':<40} {col}{pct}%{Style.RESET_ALL}  ({s.get('laps_covered')}/{laps_t})")
-    _cs("adminCount=1 (total)",             s.get("admincount1_total"), warn_above=20)
-    _cs("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"))
-    _cs("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"))
-    _cs("adminCount=1 (stale)",             s.get("admincount1_stale"))
-    _cs("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"))
-    _cs("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"))
-    _cs("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"))
-    _cs("GPOs (orphaned)",                  s.get("gpo_orphaned"))
-    _cs("GPOs (unlinked)",                  s.get("gpo_unlinked"))
-    _cs("GPOs (empty/never edited)",        s.get("gpo_empty"))
+    _cs("adminCount=1 (总计)",        s.get("admincount1_total"), warn_above=20)
+    _cs("adminCount=1 (孤立账号)",          s.get("admincount1_orphaned"))
+    _cs("adminCount=1 (已禁用 / 幽灵账号)",    s.get("admincount1_disabled"))
+    _cs("adminCount=1 (长期未登录管理员账号)",  s.get("admincount1_stale"))
+    _cs("描述字段包含明文密码. (管理员)",      s.get("passwords_in_descriptions_admins"))
+    _cs("描述字段包含明文密码. (普通用户账号)",       s.get("passwords_in_descriptions_users"))
+    _cs("描述字段包含明文密码. (计算机)",   s.get("passwords_in_descriptions_computers"))
+    _cs("GPOs (孤立组策略对象)",                  s.get("gpo_orphaned"))
+    _cs("GPOs (未链接任何域 / OU 的组策略)",                  s.get("gpo_unlinked"))
+    _cs("GPOs (空白 / 从未编辑过的组策略)",        s.get("gpo_empty"))
     # New stats (checks 25–35)
     print()
     gpp_acc = s.get("gpp_sysvol_accessible")
     if gpp_acc is False:
-        print(f"  {'GPP cpassword scan':<40} {Fore.YELLOW}SYSVOL not accessible{Style.RESET_ALL}")
+        print(f"  {'GPP 明文密码扫描':<40} {Fore.YELLOW}SYSVOL目录无法访问{Style.RESET_ALL}")
     else:
-        _cs("GPP cpassword hits (MS14-025)",     s.get("gpp_cpassword_count"))
-    _cs("AdminSDHolder risky ACEs",         s.get("adminsdholder_risky_aces"))
-    _cs("SID history (total accounts)",     s.get("sid_history_count"))
-    _cs("Shadow credentials (total)",       s.get("shadow_credentials_count"))
-    _cs("RC4-permitted service accounts",   s.get("rc4_service_accounts"))
-    _cs("RC4-permitted domain controllers", s.get("rc4_domain_controllers"))
-    _cs("Admin accts without AES enctype",  s.get("admin_no_aes_encryption"))
-    _cs("FSPs in privileged groups",        s.get("foreign_security_principals_in_priv_groups"))
+        _cs("组策略首选项加密密码命中数 (漏洞MS14-025)",     s.get("gpp_cpassword_count"))
+    _cs("AdminSDHolder 对象存在危险访问控制权限（ACE）",         s.get("adminsdholder_risky_aces"))
+    _cs("存在 SID 历史属性的账号总数",     s.get("sid_history_count"))
+    _cs("存在影子凭证的对象总数",       s.get("shadow_credentials_count"))
+    _cs("允许使用 RC4 加密的服务账号",   s.get("rc4_service_accounts"))
+    _cs("域控制器允许 RC4 加密", s.get("rc4_domain_controllers"))
+    _cs("未启用 AES 加密类型的管理员账号",  s.get("admin_no_aes_encryption"))
+    _cs("特权管理组内包含外部安全主体（FSP）",        s.get("foreign_security_principals_in_priv_groups"))
     pre_ev = s.get("pre_win2k_everyone")
     pre_an = s.get("pre_win2k_anon")
     if pre_ev is not None:
@@ -352,7 +352,7 @@ def print_report(result: ScanResult):
     frs = s.get("sysvol_using_frs")
     if frs is not None:
         col = Fore.RED+Style.BRIGHT if frs else Fore.GREEN
-        print(f"  {'SYSVOL uses legacy FRS':<40} {col}{frs}{Style.RESET_ALL}")
+        print(f"  {'SYSVOL 使用老旧FRS文件复制服务':<40} {col}{frs}{Style.RESET_ALL}")
     rbcd_dom = s.get("rbcd_on_domain_object")
     if rbcd_dom is not None:
         col = Fore.RED+Style.BRIGHT if rbcd_dom else Fore.GREEN
@@ -497,22 +497,22 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
 
     # ── Original rows ──
     orig_rows = [
-        ("Deprecated OS computers",          s.get("deprecated_os_count"),               0),
-        ("Unconstrained deleg. (comp.)",     s.get("unconstrained_delegation_computers"), 0),
-        ("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"),     0),
-        ("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"), 0),
-        ("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"),    None),
-        ("LAPS hosts missing password",      s.get("laps_missing"),                      0),
-        ("adminCount=1 (total)",             s.get("admincount1_total"),                 None),
-        ("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"),              0),
-        ("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"),              0),
-        ("adminCount=1 (stale)",             s.get("admincount1_stale"),                 0),
-        ("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"),  0),
-        ("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"),   0),
-        ("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"), 0),
-        ("GPOs (orphaned)",                  s.get("gpo_orphaned"),                      0),
-        ("GPOs (unlinked)",                  s.get("gpo_unlinked"),                      0),
-        ("GPOs (empty/never edited)",        s.get("gpo_empty"),                         0),
+        ("搭载已停止支持老旧操作系统的计算机数量",          s.get("deprecated_os_count"),               0),
+        ("开启无约束 Kerberos 委派的计算机对象数量",     s.get("unconstrained_delegation_computers"), 0),
+        ("开启无约束 Kerberos 委派的用户账号数量",     s.get("unconstrained_delegation_users"),     0),
+        ("带协议转换功能的约束委派对象数量",   s.get("constrained_delegation_proto_transition"), 0),
+        ("标准约束委派（无协议转换）对象数量",    s.get("constrained_delegation_standard"),    None),
+        ("部署了LAPS 但本地管理员密码为空的主机",      s.get("laps_missing"),                      0),
+        ("adminCount=1 特权保护对象总数",             s.get("admincount1_total"),                 None),
+        ("adminCount 残留标记的孤立管理员账号",          s.get("admincount1_orphaned"),              0),
+        ("adminCount=1 且已禁用的幽灵管理员账号",    s.get("admincount1_disabled"),              0),
+        ("adminCount=1 长期未登录僵死管理员账号",             s.get("admincount1_stale"),                 0),
+        ("账号描述中写明明文密码的管理员账号",      s.get("passwords_in_descriptions_admins"),  0),
+        ("描述内携带明文密码的普通域用户",       s.get("passwords_in_descriptions_users"),   0),
+        ("计算机对象备注里包含明文密码",   s.get("passwords_in_descriptions_computers"), 0),
+        ("孤立损坏组策略对象数量",                  s.get("gpo_orphaned"),                      0),
+        ("未关联任何域 / OU 的闲置组策略",                  s.get("gpo_unlinked"),                      0),
+        ("空白、从未配置修改过的组策略",        s.get("gpo_empty"),                         0),
     ]
 
     # LAPS coverage percentage
@@ -823,7 +823,7 @@ def export_html(result: ScanResult, path: str):
 {sections}
 
 <h2>统计数据</h2>
-<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">Key Metrics</h2>
+<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">核心指标</h2>
 {stat_cards_html}
 {new_checks_html}
 {template_inv_html}

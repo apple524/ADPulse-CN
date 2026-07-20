@@ -157,7 +157,7 @@ class ADConnector:
         if self.use_ssl:
             if self._try_ldaps():
                 return True
-            print("[!] LDAPS failed, falling back to LDAP port 389...")
+            print("[!] LDAPS 连接失败，自动降级使用 389 端口普通 LDAP 协议……")
         return self._try_ldap()
 
     # ── LDAPS ─────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ class ADConnector:
                     self.server, user=user, password=self.password,
                     authentication=auth, auto_bind=True,
                 )
-                print(f"[+] Connected via LDAPS (port 636, auth={auth}, user={user})")
+                print(f"[+] 已通过 LDAPS 建立连接(端口 636, 认证方式={auth}, 登录账号={user})")
                 return True
             except Exception as e:
                 print(f"[!] LDAPS attempt failed (auth={auth}, user={user}): {e}")
@@ -205,10 +205,10 @@ class ADConnector:
                 authentication=NTLM,
                 auto_bind=True,
             )
-            print("[+] Connected via LDAP (port 389)")
+            print("[+] 已通过 LDAP（389 端口）建立连接")
             return True
         except LDAPException as e:
-            print(f"[!] LDAP connection failed: {e}")
+            print(f"[!] LDAP 连接失败: {e}")
             return False
 
     # ── Pass-the-hash bind ────────────────────────────────────────────────────
@@ -236,10 +236,10 @@ class ADConnector:
                     auto_bind=True,
                 )
             self.conn = conn
-            print(f"[+] Connected via {proto} (port {port}, pass-the-hash, user={user})")
+            print(f"[+] 已通过 {proto} 协议建立连接 (端口 {port}, 使用哈希传递认证, 登录账号={user})")
             return True
         except Exception as e:
-            print(f"[!] PtH {proto} bind failed (port {port}): {e}")
+            print(f"[!] 哈希传递 {proto} 绑定认证失败 (端口 {port}): {e}")
             return False
 
     # ── LDAP search helpers ───────────────────────────────────────────────────
@@ -263,7 +263,7 @@ class ADConnector:
             )
             return self.conn.entries
         except LDAPException as e:
-            print(f"  [~] LDAP search error ({filt[:60]}): {e}")
+            print(f"  [~] LDAP 搜索错误 ({filt[:60]}): {e}")
             return []
 
     def get_domain_object(self) -> Optional[object]:
