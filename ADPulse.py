@@ -86,7 +86,6 @@ def main() -> None:
     print("╔═══════════════════════════════════════════╗")
     print("║ ADPulse Active Directory Security Scanner ║")
     print("║                version 1.0                ║")
-    print("║                by TheMayor                ║")
     print("╚═══════════════════════════════════════════╝\n")
 
     # ── Credential handling ───────────────────────────────────────────────────
@@ -105,14 +104,14 @@ def main() -> None:
             sys.exit(1)
         auth_desc = f"pass-the-hash (NT: {nt_hash.hex()})"
 
-    print(f"[+] Auth mode         : {auth_desc}")
+    print(f"[+] 认证方式         : {auth_desc}")
 
     # ── DC resolution ─────────────────────────────────────────────────────────
     dc_ip = args.dc_ip or resolve_dc(args.domain)
     if not dc_ip:
-        print("[!] Could not resolve DC. Use --dc-ip to specify one explicitly.")
+        print("[!] 无法解析域控制器（DC）。请使用--dc-ip参数来明确指定一个域控制器。")
         sys.exit(1)
-    print(f"[+] Domain Controller : {dc_ip}")
+    print(f"[+] 域控制器IP地址 : {dc_ip}")
 
     # ── Connect ───────────────────────────────────────────────────────────────
     ad = ADConnector(
@@ -124,9 +123,9 @@ def main() -> None:
         nt_hash  = nt_hash,
     )
     if not ad.connect():
-        print("[!] Could not establish LDAP connection. Aborting.")
+        print("[!] 无法建立 LDAP 连接，程序终止执行。")
         sys.exit(1)
-    print(f"[+] LDAP bind successful\n")
+    print(f"[+] LDAP 绑定认证成功\n")
 
     # ── Run checks ────────────────────────────────────────────────────────────
     findings, stats = run_all_checks(ad)
@@ -158,5 +157,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n[!] Interrupted by user (Ctrl+C). Exiting.")
+        print("\n[!] 程序被用户中断（按下 Ctrl+C），即将退出。")
         sys.exit(130)

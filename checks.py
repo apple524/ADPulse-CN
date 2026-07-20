@@ -1,21 +1,19 @@
 """
-All security checks. Each function receives an ADConnector and returns
-(list[Finding], dict).  run_all_checks() aggregates them all.
-
-Original checks : 1–24 (preserved verbatim)
-New checks      : 25–35
-  25. GPP / cpassword in SYSVOL (MS14-025)
-  26. AdminSDHolder ACL Inspection
-  27. SID History Abuse
-  28. Shadow Credentials (msDS-KeyCredentialLink)
-  29. RC4 / Legacy Kerberos Encryption Still Permitted
-  30. Foreign Security Principals in Privileged Groups
-  31. Pre-Windows 2000 Compatible Access Group
-  32. Dangerous Constrained Delegation Targets (LDAP / CIFS / HOST on DCs)
-  33. Orphaned AD Subnets (not mapped to any site)
-  34. Legacy FRS SYSVOL Replication
-  35. RBCD Configured on the Domain Object Itself
-  Bonus: Indirect Privileged Group Membership (non-direct transitive members)
+所有安全检测项。每个检测函数接收一个 AD 连接器实例，返回二元组：(风险发现列表，扩展信息字典)。run_all_checks() 函数负责汇总全部检测结果。
+原有检测项：1–24（原文逻辑完整保留，不作修改）
+新增检测项：25–35
+25. SYSVOL 组策略文件存在 GPP 明文密码 cpassword 漏洞（MS14-025 补丁漏洞）
+26. AdminSDHolder 权限控制列表 (ACL) 合规核查
+27. SID 历史权限滥用风险检测
+28. 影子凭据漏洞检测（对应属性 msDS-KeyCredentialLink）
+29. 域内仍允许 RC4 旧式 Kerberos 加密算法
+30. 特权管理组中存在外部安全主体账号
+31. 兼容 Windows 2000 以前版本访问权限组风险核查
+32. 危险的约束委派配置（域控上配置 LDAP/CIFS/HOST 服务委派）
+33. 孤立 AD 子网（未关联至任何站点对象）
+34. 老旧 FRS 机制同步 SYSVOL 目录复制（已淘汰复制协议）
+35. 域对象本体配置基于资源的约束委派 (RBCD)
+附加检测项：特权组间接成员检测（非直接嵌套的传递式高权限账号）
 """
 
 import datetime

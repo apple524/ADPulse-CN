@@ -25,7 +25,7 @@ SEV_BADGE_COLOR = {
     "INFO":     "#6b7280",
 }
 
-# Stats keys rendered in dedicated sections rather than the generic flat table
+# 统计数据键值以专区形式呈现，而非采用通用的平面表格形式
 _SPECIAL_STATS = {
     # original
     "adcs_template_inventory",
@@ -79,7 +79,7 @@ def _build_stat_cards(result: ScanResult) -> list:
     s     = result.stats
     cards = []
 
-    # LAPS coverage
+    # LAPS 部署覆盖情况
     total = s.get("laps_total_hosts")
     if total is not None:
         missing  = s.get("laps_missing", 0)
@@ -91,7 +91,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{covered}/{total} hosts",
                       "color": col})
 
-    # Deprecated OS
+    # 已弃用的操作系统
     dep = s.get("deprecated_os_count")
     if dep is not None:
         cards.append({"label": "Deprecated OS",
@@ -99,7 +99,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   "active computers",
                       "color": "#dc2626" if dep > 0 else "#16a34a"})
 
-    # Unconstrained delegation
+    # 无约束委派
     unc_c = s.get("unconstrained_delegation_computers")
     unc_u = s.get("unconstrained_delegation_users")
     if unc_c is not None:
@@ -109,7 +109,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{unc_c} computers / {unc_u} users",
                       "color": "#dc2626" if total_unc > 0 else "#16a34a"})
 
-    # adminCount=1
+    # 管理员标记账号
     adm_total  = s.get("admincount1_total")
     adm_orphan = s.get("admincount1_orphaned")
     if adm_total is not None:
@@ -119,7 +119,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{adm_orphan} orphaned" if adm_orphan else "no orphans",
                       "color": col})
 
-    # Passwords in descriptions
+    # 账号描述中包含明文密码
     pwd_adm   = s.get("passwords_in_descriptions_admins", 0) or 0
     pwd_usr   = s.get("passwords_in_descriptions_users",  0) or 0
     pwd_cmp   = s.get("passwords_in_descriptions_computers", 0) or 0
@@ -155,7 +155,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   sub,
                       "color": col})
 
-    # SID history
+    # SID 历史记录
     sid_hist = s.get("sid_history_count")
     if sid_hist is not None:
         cards.append({"label": "SID History Entries",
@@ -216,18 +216,18 @@ def _cs(label: str, value, warn_above: int = 0):
 def print_report(result: ScanResult):
     W = 72
     print(f"\n{'='*W}")
-    print("  ADPulse ACTIVE DIRECTORY SECURITY SCAN REPORT")
+    print("  ADPulse 活动目录安全扫描报告")
     print(f"{'='*W}")
-    print(f"  Domain      : {result.domain}")
-    print(f"  DC          : {result.dc_ip}")
-    print(f"  Scanned     : {result.scan_time}")
+    print(f"  域名Domain      : {result.domain}")
+    print(f"  域控制器IP          : {result.dc_ip}")
+    print(f"  扫描时间     : {result.scan_time}")
     score = result.total_score
     sc    = Fore.GREEN if score >= 80 else (Fore.YELLOW if score >= 60 else Fore.RED)
-    print(f"  Risk Score  : {sc}{score}/100  [{result.risk_level}]{Style.RESET_ALL}")
+    print(f"  风险评分  : {sc}{score}/100  [{result.risk_level}]{Style.RESET_ALL}")
     print(f"{'='*W}\n")
 
     counts = result.counts()
-    print("SUMMARY:")
+    print("摘要:")
     for sev in ("CRITICAL","HIGH","MEDIUM","LOW","INFO"):
         c = counts.get(sev, 0)
         if c:
@@ -235,7 +235,7 @@ def print_report(result: ScanResult):
 
     top = _top_critical_findings(result)
     print(f"\n{'─'*W}")
-    print("AT A GLANCE — MOST CRITICAL FINDINGS:")
+    print("概览 — 最高危风险汇总:")
     print(f"{'─'*W}")
     if top:
         for f in top:
@@ -774,7 +774,7 @@ def export_html(result: ScanResult, path: str):
 </script>
 </head>
 <body>
-<h1>ADPulse Active Directory Security Report</h1>
+<h1>ADPulse 活动目录安全扫描报告</h1>
 <div class="meta">
   Domain: <strong>{result.domain}</strong> &nbsp;|&nbsp;
   DC: <strong>{result.dc_ip}</strong> &nbsp;|&nbsp;
@@ -784,10 +784,10 @@ def export_html(result: ScanResult, path: str):
 <span class="level"> / 100 &nbsp;&mdash; {result.risk_level} RISK</span>
 <div class="summary">{summary_bars}</div>
 
-<h2>At a Glance &mdash; Most Critical Findings</h2>
+<h2>总览 — 最高危风险汇总</h2>
 {critical_findings_html}
 
-<h2>Scoring Legend</h2>
+<h2>评分等级图例</h2>
 <div class="legend">
   <div class="legend-score">
     <div class="legend-title">Risk Score</div>
@@ -796,33 +796,33 @@ def export_html(result: ScanResult, path: str):
     </div>
     <table class="legend-table">
       <tr><th>Score</th><th>Risk Level</th><th>Meaning</th></tr>
-      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">LOW</span></td><td>Good posture, minor issues only</td></tr>
-      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>Notable weaknesses to address</td></tr>
-      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>Significant vulnerabilities</td></tr>
-      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>Severe risks &mdash; immediate action</td></tr>
+      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">LOW</span></td><td>安全状态良好，仅存在轻微问题</td></tr>
+      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>存在明显安全缺陷，需尽快修复</td></tr>
+      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>存在大量高危漏洞</td></tr>
+      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>安全隐患极其严重，需立即处置</td></tr>
     </table>
   </div>
-  <div class="legend-sev">
+  <div class="Scoring Legend">
     <div class="legend-title">Severity Levels</div>
     <table class="legend-table">
       <tr><th>Severity</th><th>Deduction</th><th>Meaning</th></tr>
-      <tr><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>20&ndash;25 pts</td><td>Directly exploitable, likely leads to full domain compromise</td></tr>
-      <tr><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>10&ndash;15 pts</td><td>Serious misconfiguration enabling privilege escalation</td></tr>
-      <tr><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>5&ndash;10 pts</td><td>Security weakness increasing attack surface</td></tr>
-      <tr><td><span class="badge" style="background:#2563eb">LOW</span></td><td>2&ndash;5 pts</td><td>Minor hardening gap</td></tr>
-      <tr><td><span class="badge" style="background:#6b7280">INFO</span></td><td>0 pts</td><td>Informational, manual review recommended</td></tr>
+      <tr><td><span class="badge" style="background:#dc2626">紧急的</span></td><td>20&ndash;25 pts</td><td>可直接利用漏洞，大概率会导致整个域完全沦陷</td></tr>
+      <tr><td><span class="badge" style="background:#ea580c">高危</span></td><td>10&ndash;15 pts</td><td>严重配置缺陷引发越权漏洞</td></tr>
+      <tr><td><span class="badge" style="background:#ca8a04">中危</span></td><td>5&ndash;10 pts</td><td>存在安全弱点，扩大攻击范围</td></tr>
+      <tr><td><span class="badge" style="background:#2563eb">低危</span></td><td>2&ndash;5 pts</td><td>轻微安全加固缺失</td></tr>
+      <tr><td><span class="badge" style="background:#6b7280">提示</span></td><td>0 pts</td><td>仅参考类信息，建议人工复核</td></tr>
     </table>
   </div>
 </div>
 
-<h2>Findings</h2>
+<h2>审计风险项</h2>
 <div style="margin-bottom:.8rem">
   <button class="btn" onclick="expandAll()">Expand All</button>
   <button class="btn" onclick="collapseAll()">Collapse All</button>
 </div>
 {sections}
 
-<h2>Statistics</h2>
+<h2>统计数据</h2>
 <h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">Key Metrics</h2>
 {stat_cards_html}
 {new_checks_html}
@@ -841,7 +841,7 @@ def export_html(result: ScanResult, path: str):
   </div>
 </div>
 
-<footer>Generated by ADPulse Active Directory Security Scanner &mdash; for authorised use only</footer>
+<footer>ADPulse Active Directory 安全扫描器</footer>
 </body>
 </html>"""
 
