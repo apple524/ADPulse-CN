@@ -6,83 +6,82 @@
   <img src="https://github.com/dievus/ADPulse/blob/main/images/image.png"/>
 </p>
 
-ADPulse is an open-source Active Directory security auditing tool that connects to a domain controller via LDAP(S), runs 35 automated security checks, and produces detailed reports in console, JSON, and HTML formats.
+ADPulse是一款开源的Active Directory安全审计工具，它通过LDAP(S)连接到域控制器，运行35项自动化安全检查，并以控制台、JSON和HTML格式生成详细报告。
 
-It is designed for IT administrators, penetration testers, and security teams who need a fast, read-only assessment of AD misconfigurations and attack surface.
+它专为需要快速、只读评估AD（活动目录）配置错误和攻击面的IT管理员、渗透测试人员和安全团队设计。
 
-A PowerShell script named test_environment.ps1 is also included if you wish to set up your own vulnerable domain controller to test with.
-
+如果您希望设置自己的易受攻击的域控制器以进行测试，本文还包含了一个名为test_environment.ps1的PowerShell脚本。
 ---
 
-## Features
+## 功能特性 (Features)
 
-### Security Checks (35 total)
+### 安全检查项目 (共 35 项)
 
-| # | Check | Description |
+| # | 检查项目 | 具体描述 |
 |---|-------|-------------|
-| 1 | **Password Policy** | Minimum length, history, complexity, lockout threshold, reversible encryption, fine-grained PSOs |
-| 2 | **Privileged Accounts** | Membership of Domain Admins, Enterprise Admins, Schema Admins, and other sensitive groups; stale members, non-expiring passwords, passwords in descriptions, built-in Administrator status, krbtgt age |
-| 3 | **Kerberos** | Kerberoastable accounts (SPNs on user objects), AS-REP roastable accounts, DES-only encryption, high-value targets combining adminCount=1 + SPN + PasswordNeverExpires |
-| 4 | **Unconstrained Delegation** | Non-DC computers and user accounts trusted for unconstrained Kerberos delegation |
-| 5 | **Constrained Delegation** | Accounts with protocol transition (S4U2Self) and standard constrained delegation targets |
-| 6 | **ADCS / PKI** | ESC1, ESC2, ESC3, ESC6, ESC8, ESC9, ESC10, ESC11, ESC13, ESC15, weak key sizes, enrollee ACL enumeration |
-| 7 | **Domain Trusts** | Bidirectional trusts without SID filtering, forest trusts, external trusts |
-| 8 | **Account Hygiene** | Stale users/computers, never-logged-in accounts, PASSWD_NOTREQD flag, reversible encryption per-account, old passwords, duplicate SPNs |
-| 9 | **Protocol Security** | LDAP signing/channel binding, DC operating system versions, domain/forest functional level, NTLMv1/WDigest guidance |
-| 10 | **Group Policy Objects** | Disabled, orphaned, unlinked, and empty GPOs; excessive GPO count |
-| 11 | **LAPS** | Legacy LAPS and Windows LAPS schema detection; computers without LAPS passwords |
-| 12 | **LAPS Coverage** | Percentage-based coverage of all non-DC computers with a LAPS-managed password |
-| 13 | **DNS & Infrastructure** | Wildcard DNS records, LLMNR/NetBIOS-NS poisoning guidance |
-| 14 | **Domain Controllers** | Single-DC detection, legacy OS on DCs, FSMO roles, RODC password replication policy |
-| 15 | **ACL / Permissions** | ESC4, ESC5, ESC7, DCSync rights on non-privileged principals, Protected Users group, delegation ACLs |
-| 16 | **Optional Features** | AD Recycle Bin, Privileged Access Management (PAM) |
-| 17 | **Replication Health** | Site count, site link replication intervals, nTDSDSA objects |
-| 18 | **Service Accounts** | gMSA adoption, regular user service accounts, service accounts with adminCount=1 |
-| 19 | **Miscellaneous Hardening** | Machine account quota, tombstone lifetime, Schema Admins/Enterprise Admins membership, Guest account, audit policy guidance |
-| 20 | **Deprecated Operating Systems** | Enabled computer accounts reporting end-of-life Windows versions |
-| 21 | **Legacy Protocols** | SMBv1 detection, SMB signing enforcement, null session acceptance (live network probes) |
-| 22 | **Exchange** | Exchange Windows Permissions group (PrivExchange / CVE-2019-0686), Exchange Trusted Subsystem |
-| 23 | **Protected Admin Users** | adminCount=1 inventory — orphaned, ghost (disabled), and stale accounts |
-| 24 | **Passwords in Descriptions** | Keyword-based detection of credentials stored in the Description field of users, admins, and computers |
-| 25 | **GPP / cpassword (MS14-025)** | Walks SYSVOL for Group Policy Preferences XML files containing `cpassword` attributes and decrypts them using Microsoft's publicly-known AES key |
-| 26 | **AdminSDHolder ACL** | Reads the binary DACL on `CN=AdminSDHolder` and flags non-privileged principals with write access — these ACEs auto-propagate to all protected accounts every 60 minutes via SDProp |
-| 27 | **SID History** | Detects accounts with `sIDHistory` populated; escalates to CRITICAL if any injected SID maps to a privileged group (Domain Admins, Enterprise Admins, etc.) |
-| 28 | **Shadow Credentials** | Flags unexpected `msDS-KeyCredentialLink` entries on user and computer objects, enabling certificate-based authentication without knowing the account password |
-| 29 | **RC4 / Legacy Kerberos Encryption** | Checks `msDS-SupportedEncryptionTypes` on service accounts, DCs, and admin accounts to identify those still permitting RC4-HMAC — the weak enctype attackers specifically request for offline cracking |
-| 30 | **Foreign Security Principals in Privileged Groups** | Enumerates `CN=ForeignSecurityPrincipals` and flags any FSP from a trusted domain that is a member of a sensitive local group (Domain Admins, Backup Operators, etc.) |
-| 31 | **Pre-Windows 2000 Compatible Access** | Checks whether `Everyone` or `Anonymous Logon` are members of this group, which enables unauthenticated SAMR/LSARPC enumeration from anywhere on the network |
-| 32 | **Dangerous Constrained Delegation Targets** | Cross-references delegation targets against DC hostnames and flags accounts delegating to high-value service classes (`ldap/`, `cifs/`, `host/`, `gc/`, `krbtgt/`) on Domain Controllers |
-| 33 | **Orphaned AD Subnets** | Finds subnets with no `siteObject` assignment, causing clients to receive a random DC and potentially routing authentication traffic across WAN links |
-| 34 | **Legacy FRS SYSVOL Replication** | Detects whether SYSVOL is still replicating via the deprecated File Replication Service instead of DFSR, and flags stalled mid-migration states |
-| 35 | **RBCD on Domain Object / DCs** | Checks `msDS-AllowedToActOnBehalfOfOtherIdentity` on the domain NC head and all DC computer objects — either configuration grants effective Domain Admin to the permitted principals via S4U2Proxy |
+| 1 | **密码策略 (Password Policy)** | 最小密码长度、密码历史留存、密码复杂度、账户锁定阈值、可逆加密、细粒度密码策略（PSO） |
+| 2 | **高权限账户** | 域管理员、企业管理员、架构管理员等敏感组成员；长期未使用账户、永不过期密码、描述字段内置明文密码、内置管理员状态、krbtgt 账户存续时长 |
+| 3 | **Kerberos 风险** | 可 Kerberoast 攻击账户（用户对象绑定 SPN）、可 AS-REP Roast 攻击账户、仅支持 DES 加密、高风险目标（adminCount=1 + 绑定 SPN + 密码永不过期） |
+| 4 | **无约束委派** | 配置无约束 Kerberos 委派权限的非域控计算机与用户账户 |
+| 5 | **约束委派** | 配置协议转换（S4U2Self）与标准约束委派目标的账户 |
+| 6 | **ADCS / PKI 证书服务** | ESC1、ESC2、ESC3、ESC6、ESC8、ESC9、ESC10、ESC11、ESC13、ESC15 各类证书漏洞；弱密钥长度、证书注册权限枚举 |
+| 7 | **域信任关系** | 未启用 SID 过滤的双向信任、林信任、外部域信任 |
+| 8 | **账户规范管理** | 长期闲置用户 / 计算机账户、从未登录账户、无需密码登录标记、单账户可逆加密、老旧密码、重复 SPN |
+| 9 | **协议安全配置** | LDAP 签名 / 通道绑定、域控制器操作系统版本、域 / 林功能级别、NTLMv1/WDigest 风险提示 |
+| 10 | **组策略对象（GPO）** | 已禁用、孤立、未链接、空 GPO；GPO 数量过多风险 |
+| 11 | **LAPS 本地管理员密码方案** | 旧版 LAPS 与 Windows 原生 LAPS 架构检测；未配置 LAPS 密码的计算机 |
+| 12 | **LAPS 覆盖覆盖率** | 所有非域控计算机中启用 LAPS 托管密码的占比统计 |
+| 13 | **DNS 与基础设施** | DNS 泛域名记录、LLMNR/NetBIOS-NS 投毒风险提示 |
+| 14 | **域控制器检测** | 单域控环境识别、老旧系统域控、FSMO 五大角色、只读域控（RODC）密码复制策略 |
+| 15 | **ACL 权限控制** | ESC4、ESC5、ESC7 证书权限漏洞；普通主体拥有 DCSync 权限；受保护用户组、委派相关 ACL |
+| 16 | **可选扩展检测** | AD 回收站、特权访问管理（PAM） |
+| 17 | **复制健康状态** | 站点数量、站点链接复制间隔、nTDSDSA 复制对象 |
+| 18 | **服务账户** | 托管组服务账户（gMSA）部署情况、普通用户型服务账户、拥有管理员权限（adminCount=1）的服务账户 |
+| 19 | **加固配置杂项** | 计算机账户创建配额、墓碑生存期、架构管理员 / 企业管理员成员、来宾账户、审计策略指引 |
+| 20 | **淘汰操作系统** | 已启用账户绑定停止支持（EOL）Windows 系统主机 |
+| 21 | **老旧不安全协议** | SMBv1 检测、强制 SMB 签名、空会话探测（实时网络探测） |
+| 22 | **Exchange 相关风险** | Exchange Windows Permissions 组（PrivExchange / CVE-2019-0686）、Exchange 可信子系统 |
+| 23 | **受保护管理员账户** | adminCount=1 管理员全量盘点：孤立账户、禁用幽灵账户、长期闲置管理员 |
+| 24 | **描述字段明文密码** | 关键词匹配检测用户、管理员、计算机描述字段内存储的明文凭证 |
+| 25 | **GPP 组策略密码 cpassword（MS14-025）** | 遍历 SYSVOL 内组策略首选项 XML 文件，提取 cpassword 字段并使用微软公开 AES 密钥解密 |
+| 26 | **AdminSDHolder 权限列表** | 读取 `CN=AdminSDHolder` 二进制 DACL，标记拥有写入权限的非特权主体；该权限每 60 分钟通过 SDProp 自动同步至所有受保护管理员账户 |
+| 27 | **	SID 历史注入** | 检测配置 `sIDHistory` 的账户；若注入 SID 映射至域管理员、企业管理员等高权限组，标记为严重风险 |
+| 28 | **影子凭证（Shadow Credentials）** | 标记用户 / 计算机对象上异常 `msDS-KeyCredentialLink` 条目，攻击者可无需账户密码，通过证书认证登录 |
+| 29 | **RC4 老旧 Kerberos 加密** | 检测服务账户、域控、管理员账户的` msDS-SupportedEncryptionTypes`，识别仍允许 RC4-HMAC 加密的对象（攻击者常用该弱加密类型离线爆破） |
+| 30 | **高权限组内外部安全主体** | 枚举外部安全主体容器 `CN=ForeignSecurityPrincipals`，标记可信域外主体加入域管理员、备份操作员等敏感本地组的情况 |
+| 31 | **兼容 Windows 2000 访问权限** | 检测该组是否包含 `Everyone` 或 `Anonymous Logon` 用户，此配置允许全网未认证主体枚举 SAMR/LSARPC 信息 |
+| 32 | **高危约束委派目标** | 交叉比对委派目标与域控主机名，标记可向域控  (`ldap/`, `cifs/`, `host/`, `gc/`, `krbtgt/`)等高价值服务类委派权限的账户 |
+| 33 | **孤立 AD 子网** | 查找未绑定站点对象 `siteObject` 的子网，客户端会随机分配域控，可能导致认证流量跨广域网传输 |
+| 34 | **老旧 FRS SYSVOL 复制** | 检测 SYSVOL 是否仍使用已淘汰的文件复制服务（FRS）而非 DFSR，标记迁移中断状态 |
+| 35 | **域 / 域控反向约束委派（RBCD）** | 检测域根命名上下文与所有域控计算机对象的 `msDS-AllowedToActOnBehalfOfOtherIdentity` 该配置会赋予指定主体通过 S4U2Proxy 获取域管理员权限 |
 
-### Reporting
+### 报告输出
 
-- **Console** — colour-coded terminal output with at-a-glance critical findings and key metrics
-- **JSON** — machine-readable export for integration with SIEMs, ticketing systems, or custom dashboards
-- **HTML** — self-contained dark-themed report with collapsible sections, severity badges, stat cards, scoring legend, and an ADCS template inventory
+- **控制台** — 彩色终端输出，直观展示高危漏洞与核心指标
+- **JSON** — 机器可读格式，可对接 SIEM、工单系统、自定义可视化面板
+- **HTML** — 独立深色主题报告，支持折叠模块、风险等级标签、数据统计卡片、证书模板清单
 
-### Scoring
+### 风险评分机制
 
-Every finding carries a risk-score deduction. The overall score starts at **100** and is reduced per finding:
+所有检测结果均会扣除对应风险分值，初始满分**100 分**：
 
-| Score | Risk Level | Meaning |
+| 得分区间| 风险等级 | 说明 |
 |-------|-----------|---------|
-| 80–100 | LOW | Good security posture, minor issues only |
-| 60–79 | MEDIUM | Notable weaknesses that should be addressed |
-| 40–59 | HIGH | Significant vulnerabilities present |
-| 0–39 | CRITICAL | Severe risks — immediate remediation required |
+| 80–100 | 低风险 | 安全状态良好，仅存在轻微问题|
+| 60–79 | 中风险 | 存在明显安全缺陷，需尽快修复 |
+| 40–59 | 高风险	 | 存在大量高危漏洞 |
+| 0–39 | 严重风险 | 安全隐患极其严重，需立即处置 |
 
 ---
 
-## Requirements
+## 运行环境要求
 
-- Python 3.8+
-- Network access to a Domain Controller (port 636 for LDAPS, 389 for LDAP, 445 for SMB probes)
-- A domain account with read access (no admin rights required for most checks)
-- For check 25 (GPP/cpassword): SYSVOL must be accessible from the scanning host (UNC path on Windows, or Samba mount on Linux/macOS)
+- Python 3.8 及以上版本
+- 网络可访问域控制器（636 端口 LDAPS、389 端口 LDAP、445 端口 SMB 探测）
+- 拥有域读取权限的域账户（绝大多数检测无需管理员权限）
+- 检测项 25（GPP/cpassword）依赖：扫描主机可访问 SYSVOL 共享（Windows 直接 UNC 访问；Linux/macOS 需通过 Samba 挂载）
 
-### Python Dependencies
+### Python 依赖库
 
 ```
 ldap3>=2.9
@@ -94,57 +93,57 @@ weasyprint
 
 ---
 
-## Installation
+## 安装步骤
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourorg/adpulse.git
 cd adpulse
 
-# (Recommended) Create a virtual environment
+# 推荐：创建虚拟环境隔离依赖
 python -m venv venv
 source venv/bin/activate        # Linux / macOS
 venv\Scripts\activate           # Windows
 
-# Install dependencies
+# 安装全部依赖包
 pip install -r requirements.txt
 ```
 
 ---
 
-## Usage
+## 使用说明
 
-### Basic Scan
+### 基础扫描命令
 
 ```bash
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!'
 ```
 
-The DC IP is auto-resolved via DNS. All three report formats (console, JSON, HTML) are generated by default into a `Reports/` folder.
+工具通过 DNS 自动解析域控制器 IP，默认生成控制台、JSON、HTML 三种报告，统一输出至 `Reports/` 文件夹。
 
-### Specify a Domain Controller
+### 指定目标域控制器 IP
 
 ```bash
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --dc-ip 10.0.0.1
 ```
 
-### Choose Report Format
+### 自定义报告输出格式
 
 ```bash
-# Console only
+# 仅控制台输出
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --report console
 
-# JSON only
+# 仅导出JSON
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --report json
 
-# HTML only
+# 仅导出HTML报告
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --report html
 
-# All formats (default)
+# 全部格式（默认配置）
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --report all
 ```
 
-### Custom Output Directory
+### 自定义报告存储目录
 
 ```bash
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --output-dir /tmp/scans
@@ -152,91 +151,71 @@ python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --out
 
 Reports are written to `<output-dir>/Reports/`.
 
-### Disable Colour Output
+### 关闭控制台彩色输出
 
 ```bash
 python ADPulse.py --domain corp.local --user jsmith --password 'P@ssw0rd!' --no-color
 ```
 
-### Full Argument Reference
+### 完整参数对照表
 
-| Argument | Required | Default | Description |
+| 参数 | 是否必填 | 默认值 | 说明 |
 |----------|----------|---------|-------------|
-| `--domain` | Yes | — | Target AD domain (e.g. `corp.local`) |
-| `--user` | Yes | — | Domain username |
-| `--password` | Yes | — | Domain password |
-| `--hash` | Only without Password | — | Domain NTLM hash |
-| `--dc-ip` | No | Auto-resolved | Domain Controller IP address |
-| `--report` | No | `all` | Report format: `console`, `json`, `html`, or `all` |
-| `--output-dir` | No | `.` | Parent directory for the `Reports/` folder |
-| `--no-color` | No | `false` | Disable colour in console output |
+| `--domain` | Yes | — | 目标活动目录域名（例：`corp.local`）|
+| `--user` | Yes | — | 域登录用户名 |
+| `--password` | Yes | — | 域账户密码 |
+| `--hash` | 无密码时必填 | — | 域账户 NTLM 哈希值 |
+| `--dc-ip` | No | DNS 自动解析 | 域控制器指定 IP 地址 |
+| `--report` | No | `all` | 报告格式: `console`, `json`, `html`, or `all` |
+| `--output-dir` | No | `.` | Reports 文件夹的存储路径 `Reports/`  |
+| `--no-color` | No | `false` | 关闭终端彩色打印 |
 
 ---
 
-## Project Structure
+## 项目文件结构
 
 ```
 adpulse/
-├── ADPulse.py          # Entry point — argument parsing, orchestration
-├── connector.py        # LDAP(S) connection, search helpers, SID resolution
-├── checks.py           # All 35 security checks
-├── models.py           # Finding and ScanResult data classes
-├── report.py           # Console, JSON, and HTML report generation
-├── __init__.py         # Package metadata
-└── requirements.txt    # Python dependencies
+├── ADPulse.py          # 程序入口：参数解析、扫描流程调度
+├── connector.py        # LDAP(S) 连接封装、查询工具、SID 解析
+├── checks.py           # 全部35项安全检测逻辑
+├── models.py           # 漏洞结果、扫描结果数据模型
+├── report.py           # 控制台、JSON、HTML 报告生成模块
+├── __init__.py         # 包基础信息
+└── requirements.txt    # Python 依赖清单
 ```
 
 ---
 
-## How It Works
+## 工具工作原理
 
-1. **Connect** — ADPulse binds to the target DC over LDAPS (port 636) with automatic fallback to LDAP (port 389). Authentication is attempted via NTLM and SIMPLE bind.
-2. **Scan** — Each of the 35 check functions queries AD via LDAP and, for certain checks, performs supplementary operations: lightweight network probes (SMBv1, signing, null sessions) against discovered hosts, SYSVOL filesystem traversal for GPP credential detection, and raw binary DACL parsing for ACL-based checks.
-3. **Score** — Findings are assigned a severity (CRITICAL → INFO) and a point deduction. The overall score is `max(0, 100 - total_deductions)`.
-4. **Report** — Results are rendered to the console and optionally exported as JSON and/or a self-contained HTML file.
+1. **建立连接** — ADPulse 通过 636 端口 LDAPS 建立连接，连接失败自动降级至 389 端口 LDAP；同时支持 NTLM、简易绑定两种认证方式。
+2. **执行扫描** — 依次调用 35 项检测函数，通过 LDAP 查询 AD 数据；部分检测附加辅助操作：对发现主机执行轻量网络探测（SMBv1、SMB 签名、空会话）、遍历 SYSVOL 文件检测 GPP 明文凭证、解析二进制 DACL 完成权限审计。
+3. **风险打分** — 每条漏洞分配对应风险等级（严重→提示）与扣分值，最终总分计算公式：`max(0, 100 - 总扣分值)`。
+4. **生成报告** — 结果打印至终端，同时可选导出 JSON 与独立 HTML 文件。
 
-All operations are **read-only**. ADPulse does not modify any AD objects, group memberships, GPOs, or ACLs.
-
----
-
-## Security Considerations
-
-- ADPulse requires valid domain credentials. Store and transmit credentials securely.
-- The SMB probe checks (SMBv1, signing, null sessions) send raw TCP packets to port 445 on discovered hosts. Ensure you have authorisation to perform network-level testing.
-- The GPP/cpassword check (check 25) reads files from SYSVOL. No files are modified or deleted.
-- HTML reports may contain sensitive information (account names, group memberships, SPN details, decrypted GPP passwords). Treat all report formats as confidential and store them securely.
-- Run ADPulse from a trusted, hardened workstation on the target network.
+全部操作均为**只读**,ADPulse 不会修改任何 AD 对象、组关系、组策略或权限列表。
 
 ---
 
-## Limitations
+## 安全使用注意事项
 
-- **Registry-only settings** — NTLMv1 (`LmCompatibilityLevel`), WDigest (`UseLogonCredential`), LDAP signing (`ldapServerIntegrity`), and channel binding (`ldapEnforceChannelBinding`) cannot be read via LDAP. ADPulse flags these as manual verification items.
-- **GPO content** — ADPulse checks GPO metadata (flags, version, SYSVOL path, links) but does not parse GPO settings files from SYSVOL (with the exception of the cpassword scan in check 25).
-- **SYSVOL access** — Check 25 (GPP/cpassword) requires the scanning host to have filesystem access to SYSVOL. On Windows this is available via UNC path. On Linux/macOS the share must be mounted via Samba. If inaccessible, the check reports a manual verification notice.
-- **ADCS ESC8** — The HTTP web enrollment check requires network reachability to the CA's `certsrv` endpoint.
-- **SMB probes** — Firewalls or host-based rules may block port 445, causing false negatives for SMBv1/signing/null session checks.
-- **Shadow credentials** — `msDS-KeyCredentialLink` entries added by legitimate Windows Hello for Business deployments will be reported and require manual review to distinguish from attacker-planted entries.
-- **Size limits** — LDAP queries are capped at 10,000 results per search. Very large domains may require multiple runs or increased server-side limits.
+- 工具运行需要合法域账号，账号密码需加密存储与传输。
+- SMB 探测模块会向目标主机 445 端口发送原始 TCP 数据包，执行网络层面测试前务必获得授权。
+- GPP/cpassword 检测仅读取 SYSVOL 文件，不会修改、删除任何文件。
+- HTML 报告包含敏感数据（账户名、组成员、SPN、解密后的 GPP 密码），所有报告文件均需保密存储。
+- 请在目标网络内受信任、加固后的工作站运行本工具。
 
 ---
 
-## Contributing
+## 工具局限性
 
-Contributions are welcome. To add a new check:
-
-1. Create a function in `checks.py` following the signature `def check_name(ad: ADConnector) -> Tuple[List[Finding], Dict]`.
-2. Add it to the `checks` list inside `run_all_checks()`.
-3. Add any new stat keys to `_SPECIAL_STATS` in `report.py` if they need dedicated rendering, or to `_build_stat_cards()` if they warrant a key-metric card.
-
----
-
-## License
-
-This project is released under the MIT License. See `LICENSE` for details.
+- **仅注册表存储的配置** — NTLMv1 (`LmCompatibilityLevel`), WDigest (`UseLogonCredential`), LDAP 签名 (`ldapServerIntegrity`), 通道绑定 (`ldapEnforceChannelBinding`) 无法通过 LDAP 读取，工具仅标记为人工复核项。
+- **组策略内容解析限制** — 仅检测 GPO 元数据（启用状态、孤立、SYSVOL 路径、链接关系），除 cpassword 检测外不会解析 SYSVOL 内完整策略配置文件。
+- **SYSVOL 访问依赖** — 检测项 25（GPP/cpassword）需要扫描主机文件系统访问 SYSVOL。Windows 原生支持 UNC 路径；Linux/macOS 需挂载 Samba 共享，无法访问时工具提示人工核查。
+- **ADCS ESC8 检测** — 证书 Web 注册点检测需要网络可达 CA 的 `certsrv` 服务地址。
+- **SMB 探测干扰** — 防火墙、主机安全策略拦截 445 端口会导致 SMBv1、SMB 签名、空会话检测出现漏报。
+- **影子凭证区分困难** — Windows Hello for Business 合法创建的 `msDS-KeyCredentialLink` 条目同样会被扫描标记，需人工区分合法配置与攻击者植入凭证。
+- **查询结果上限** — LDAP 单次查询最多返回 10000 条数据，超大型域可能需要多次扫描或调整域控查询上限。
 
 ---
-
-## Disclaimer
-
-ADPulse is provided as-is for **authorised security assessments only**. Always obtain written permission before scanning any Active Directory environment. The authors are not responsible for misuse or any damage caused by this tool.
