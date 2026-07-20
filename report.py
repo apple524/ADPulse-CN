@@ -304,41 +304,41 @@ def print_report(result: ScanResult):
     print("附加检测汇总:")
     print(f"{'─'*W}")
     # Original stats
-    _cs("已停止支持操作系统的计算机",                s.get("deprecated_os_count"))
-    _cs("无约束委派（计算机对象）",                 s.get("unconstrained_delegation_computers"))
-    _cs("无约束委派（用户账号）",                   s.get("unconstrained_delegation_users"))
-    _cs("约束委派（协议转换模式）",                 s.get("constrained_delegation_proto_transition"))
-    _cs("受限委托（标准）",                       s.get("constrained_delegation_standard"), warn_above=-1)
-    _cs("未部署 LAPS 的非域控主机",                s.get("laps_missing"))
+    _cs("已停止支持操作系统的计算机",s.get("deprecated_os_count"))
+    _cs("无约束委派（计算机对象）",s.get("unconstrained_delegation_computers"))
+    _cs("无约束委派（用户账号）",s.get("unconstrained_delegation_users"))
+    _cs("约束委派（协议转换模式）",s.get("constrained_delegation_proto_transition"))
+    _cs("受限委托（标准）",s.get("constrained_delegation_standard"), warn_above=-1)
+    _cs("未部署 LAPS 的非域控主机",s.get("laps_missing"))
     laps_t = s.get("laps_total_hosts")
     if laps_t:
         pct = int(100 * (s.get("laps_covered") or 0) / laps_t)
         col = Fore.GREEN if pct==100 else (Fore.YELLOW if pct>=80 else Fore.RED+Style.BRIGHT)
         print(f"  {'LAPS coverage':<40} {col}{pct}%{Style.RESET_ALL}  ({s.get('laps_covered')}/{laps_t})")
-    _cs("adminCount=1 (总计)",                   s.get("admincount1_total"), warn_above=20)
-    _cs("adminCount=1 (孤立账号)",                s.get("admincount1_orphaned"))
-    _cs("adminCount=1 (已禁用 / 幽灵账号)",        s.get("admincount1_disabled"))
-    _cs("adminCount=1 (长期未登录管理员账号)",       s.get("admincount1_stale"))
-    _cs("描述字段包含明文密码. (管理员)",             s.get("passwords_in_descriptions_admins"))
-    _cs("描述字段包含明文密码. (普通用户账号)",        s.get("passwords_in_descriptions_users"))
-    _cs("描述字段包含明文密码. (计算机)",             s.get("passwords_in_descriptions_computers"))
-    _cs("GPOs (孤立组策略对象)",                   s.get("gpo_orphaned"))
-    _cs("GPOs (未链接任何域 / OU 的组策略)",        s.get("gpo_unlinked"))
-    _cs("GPOs (空白 / 从未编辑过的组策略)",         s.get("gpo_empty"))
+    _cs("adminCount=1 (总计)",s.get("admincount1_total"), warn_above=20)
+    _cs("adminCount=1 (孤立账号)",s.get("admincount1_orphaned"))
+    _cs("adminCount=1 (已禁用 / 幽灵账号)",s.get("admincount1_disabled"))
+    _cs("adminCount=1 (长期未登录管理员账号)",s.get("admincount1_stale"))
+    _cs("描述字段包含明文密码. (管理员)",s.get("passwords_in_descriptions_admins"))
+    _cs("描述字段包含明文密码. (普通用户账号)",s.get("passwords_in_descriptions_users"))
+    _cs("描述字段包含明文密码. (计算机)",s.get("passwords_in_descriptions_computers"))
+    _cs("GPOs (孤立组策略对象)",s.get("gpo_orphaned"))
+    _cs("GPOs (未链接任何域 / OU 的组策略)",s.get("gpo_unlinked"))
+    _cs("GPOs (空白 / 从未编辑过的组策略)",s.get("gpo_empty"))
     # New stats (checks 25–35)
     print()
     gpp_acc = s.get("gpp_sysvol_accessible")
     if gpp_acc is False:
         print(f"  {'GPP 明文密码扫描':<40} {Fore.YELLOW}SYSVOL目录无法访问{Style.RESET_ALL}")
     else:
-        _cs("组策略首选项加密密码命中数 (漏洞MS14-025)",         s.get("gpp_cpassword_count"))
-    _cs("AdminSDHolder 对象存在危险访问控制权限（ACE）",         s.get("adminsdholder_risky_aces"))
-    _cs("存在 SID 历史属性的账号总数",                          s.get("sid_history_count"))
-    _cs("存在影子凭证的对象总数",                               s.get("shadow_credentials_count"))
-    _cs("允许使用 RC4 加密的服务账号",                          s.get("rc4_service_accounts"))
-    _cs("域控制器允许 RC4 加密",                               s.get("rc4_domain_controllers"))
-    _cs("未启用 AES 加密类型的管理员账号",                       s.get("admin_no_aes_encryption"))
-    _cs("特权管理组内包含外部安全主体（FSP）",                    s.get("foreign_security_principals_in_priv_groups"))
+        _cs("组策略首选项加密密码命中数 (漏洞MS14-025)",s.get("gpp_cpassword_count"))
+    _cs("AdminSDHolder 对象存在危险访问控制权限（ACE）",s.get("adminsdholder_risky_aces"))
+    _cs("存在 SID 历史属性的账号总数",s.get("sid_history_count"))
+    _cs("存在影子凭证的对象总数",s.get("shadow_credentials_count"))
+    _cs("允许使用 RC4 加密的服务账号",s.get("rc4_service_accounts"))
+    _cs("域控制器允许 RC4 加密",s.get("rc4_domain_controllers"))
+    _cs("未启用 AES 加密类型的管理员账号",s.get("admin_no_aes_encryption"))
+    _cs("特权管理组内包含外部安全主体（FSP）",s.get("foreign_security_principals_in_priv_groups"))
     pre_ev = s.get("pre_win2k_everyone")
     pre_an = s.get("pre_win2k_anon")
     if pre_ev is not None:
@@ -347,8 +347,8 @@ def print_report(result: ScanResult):
         if pre_an: tag += " [ANON]"
         col = (Fore.RED+Style.BRIGHT) if (pre_ev or pre_an) else Fore.GREEN
         print(f"  {'兼容 Windows 2000 访问权限':<40} {col}{pre_ev or pre_an}{tag}{Style.RESET_ALL}")
-    _cs("Dangerous delegation targets",     s.get("dangerous_delegation_targets"))
-    _cs("Orphaned AD subnets",              s.get("orphaned_subnet_count"))
+    _cs("高危委派目标",s.get("dangerous_delegation_targets"))
+    _cs("孤立 AD 子网",s.get("orphaned_subnet_count"))
     frs = s.get("sysvol_using_frs")
     if frs is not None:
         col = Fore.RED+Style.BRIGHT if frs else Fore.GREEN
@@ -357,7 +357,7 @@ def print_report(result: ScanResult):
     if rbcd_dom is not None:
         col = Fore.RED+Style.BRIGHT if rbcd_dom else Fore.GREEN
         print(f"  {'域对象反向约束委派':<40} {col}{rbcd_dom}{Style.RESET_ALL}")
-    _cs("RBCD on DC computer objects",      s.get("rbcd_on_dc_count"))
+    _cs("域 / 域控反向约束委派（RBCD）",s.get("rbcd_on_dc_count"))
     print()
 
 
@@ -387,7 +387,7 @@ def export_json(result: ScanResult, path: str):
     }
     with open(path, "w", encoding="utf-8") as fp:
         json.dump(data, fp, indent=2, default=str)
-    print(f"[+] JSON report -> {path}")
+    print(f"[+] JSON 格式巡检报告 -> {path}")
 
 
 # ── HTML helpers ──────────────────────────────────────────────────────────────
@@ -591,7 +591,7 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
     return (
         '<div class="cat-section" style="margin-top:1rem">'
         '<div class="cat-header" onclick="toggle(this)">'
-        '<span class="cat-title">Additional Check Summary</span>'
+        '<span class="cat-title">附加检测汇总</span>'
         '<span class="chevron">&#9660;</span>'
         "</div>"
         '<div class="cat-body collapsed">'
@@ -829,7 +829,7 @@ def export_html(result: ScanResult, path: str):
 {template_inv_html}
 <div class="cat-section" style="margin-top:.6rem">
   <div class="cat-header" onclick="toggle(this)">
-    <span class="cat-title">Domain Statistics</span>
+    <span class="cat-title">域统计信息</span>
     <span class="chevron">&#9660;</span>
   </div>
   <div class="cat-body collapsed">
@@ -847,4 +847,4 @@ def export_html(result: ScanResult, path: str):
 
     with open(path, "w", encoding="utf-8") as fp:
         fp.write(html)
-    print(f"[+] HTML report -> {path}")
+    print(f"[+] HTML格式巡检报告 -> {path}")
