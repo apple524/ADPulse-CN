@@ -25,7 +25,7 @@ SEV_BADGE_COLOR = {
     "INFO":     "#6b7280",
 }
 
-# 统计数据键值以专区形式呈现，而非采用通用的平面表格形式
+# Stats keys rendered in dedicated sections rather than the generic flat table
 _SPECIAL_STATS = {
     # original
     "adcs_template_inventory",
@@ -79,7 +79,7 @@ def _build_stat_cards(result: ScanResult) -> list:
     s     = result.stats
     cards = []
 
-    # LAPS 部署覆盖情况
+    # LAPS coverage
     total = s.get("laps_total_hosts")
     if total is not None:
         missing  = s.get("laps_missing", 0)
@@ -91,7 +91,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{covered}/{total} hosts",
                       "color": col})
 
-    # 已弃用的操作系统
+    # Deprecated OS
     dep = s.get("deprecated_os_count")
     if dep is not None:
         cards.append({"label": "Deprecated OS",
@@ -99,7 +99,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   "active computers",
                       "color": "#dc2626" if dep > 0 else "#16a34a"})
 
-    # 无约束委派
+    # Unconstrained delegation
     unc_c = s.get("unconstrained_delegation_computers")
     unc_u = s.get("unconstrained_delegation_users")
     if unc_c is not None:
@@ -109,7 +109,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{unc_c} computers / {unc_u} users",
                       "color": "#dc2626" if total_unc > 0 else "#16a34a"})
 
-    # 管理员标记账号
+    # adminCount=1
     adm_total  = s.get("admincount1_total")
     adm_orphan = s.get("admincount1_orphaned")
     if adm_total is not None:
@@ -119,7 +119,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   f"{adm_orphan} orphaned" if adm_orphan else "no orphans",
                       "color": col})
 
-    # 账号描述中包含明文密码
+    # Passwords in descriptions
     pwd_adm   = s.get("passwords_in_descriptions_admins", 0) or 0
     pwd_usr   = s.get("passwords_in_descriptions_users",  0) or 0
     pwd_cmp   = s.get("passwords_in_descriptions_computers", 0) or 0
@@ -155,7 +155,7 @@ def _build_stat_cards(result: ScanResult) -> list:
                       "sub":   sub,
                       "color": col})
 
-    # SID 历史记录
+    # SID history
     sid_hist = s.get("sid_history_count")
     if sid_hist is not None:
         cards.append({"label": "SID History Entries",
@@ -216,18 +216,18 @@ def _cs(label: str, value, warn_above: int = 0):
 def print_report(result: ScanResult):
     W = 72
     print(f"\n{'='*W}")
-    print("  ADPulse 活动目录安全扫描报告")
+    print("  ADPulse ACTIVE DIRECTORY SECURITY SCAN REPORT")
     print(f"{'='*W}")
-    print(f"  域名Domain      : {result.domain}")
-    print(f"  域控制器IP          : {result.dc_ip}")
-    print(f"  扫描时间     : {result.scan_time}")
+    print(f"  Domain      : {result.domain}")
+    print(f"  DC          : {result.dc_ip}")
+    print(f"  Scanned     : {result.scan_time}")
     score = result.total_score
     sc    = Fore.GREEN if score >= 80 else (Fore.YELLOW if score >= 60 else Fore.RED)
-    print(f"  风险评分  : {sc}{score}/100  [{result.risk_level}]{Style.RESET_ALL}")
+    print(f"  Risk Score  : {sc}{score}/100  [{result.risk_level}]{Style.RESET_ALL}")
     print(f"{'='*W}\n")
 
     counts = result.counts()
-    print("摘要:")
+    print("SUMMARY:")
     for sev in ("CRITICAL","HIGH","MEDIUM","LOW","INFO"):
         c = counts.get(sev, 0)
         if c:
@@ -235,7 +235,7 @@ def print_report(result: ScanResult):
 
     top = _top_critical_findings(result)
     print(f"\n{'─'*W}")
-    print("概览 — 最高危风险汇总:")
+    print("AT A GLANCE — MOST CRITICAL FINDINGS:")
     print(f"{'─'*W}")
     if top:
         for f in top:
@@ -251,7 +251,7 @@ def print_report(result: ScanResult):
     cards = _build_stat_cards(result)
     if cards:
         print(f"{'─'*W}")
-        print("核心指标:")
+        print("KEY METRICS:")
         print(f"{'─'*W}")
         c_map = {
             "#dc2626": Fore.RED + Style.BRIGHT,
@@ -264,7 +264,7 @@ def print_report(result: ScanResult):
             print(f"  {card['label']:<38}{col}{card['value']:<8}{Style.RESET_ALL} ({card['sub']})")
 
     print(f"\n{'─'*W}")
-    print("风险隐患清单（按危险等级排序）:")
+    print("FINDINGS (sorted by severity):")
     print(f"{'─'*W}\n")
 
     for f in result.findings_by_severity():
@@ -288,7 +288,7 @@ def print_report(result: ScanResult):
     inventory = result.stats.get("adcs_template_inventory", [])
     if inventory:
         print(f"{'─'*W}")
-        print("ADCS 证书模板清单:")
+        print("ADCS TEMPLATE INVENTORY:")
         print(f"{'─'*W}")
         for entry in inventory:
             name, status = entry.split(": ", 1)
@@ -301,44 +301,44 @@ def print_report(result: ScanResult):
 
     s = result.stats
     print(f"{'─'*W}")
-    print("附加检测汇总:")
+    print("ADDITIONAL CHECK SUMMARY:")
     print(f"{'─'*W}")
     # Original stats
-    _cs("已停止支持操作系统的计算机",s.get("deprecated_os_count"))
-    _cs("无约束委派（计算机对象）",s.get("unconstrained_delegation_computers"))
-    _cs("无约束委派（用户账号）",s.get("unconstrained_delegation_users"))
-    _cs("约束委派（协议转换模式）",s.get("constrained_delegation_proto_transition"))
-    _cs("受限委托（标准）",s.get("constrained_delegation_standard"), warn_above=-1)
-    _cs("未部署 LAPS 的非域控主机",s.get("laps_missing"))
+    _cs("Deprecated OS computers",          s.get("deprecated_os_count"))
+    _cs("Unconstrained deleg. (computers)", s.get("unconstrained_delegation_computers"))
+    _cs("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"))
+    _cs("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"))
+    _cs("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"), warn_above=-1)
+    _cs("LAPS missing (non-DC hosts)",      s.get("laps_missing"))
     laps_t = s.get("laps_total_hosts")
     if laps_t:
         pct = int(100 * (s.get("laps_covered") or 0) / laps_t)
         col = Fore.GREEN if pct==100 else (Fore.YELLOW if pct>=80 else Fore.RED+Style.BRIGHT)
         print(f"  {'LAPS coverage':<40} {col}{pct}%{Style.RESET_ALL}  ({s.get('laps_covered')}/{laps_t})")
-    _cs("adminCount=1 (总计)",s.get("admincount1_total"), warn_above=20)
-    _cs("adminCount=1 (孤立账号)",s.get("admincount1_orphaned"))
-    _cs("adminCount=1 (已禁用 / 幽灵账号)",s.get("admincount1_disabled"))
-    _cs("adminCount=1 (长期未登录管理员账号)",s.get("admincount1_stale"))
-    _cs("描述字段包含明文密码. (管理员)",s.get("passwords_in_descriptions_admins"))
-    _cs("描述字段包含明文密码. (普通用户账号)",s.get("passwords_in_descriptions_users"))
-    _cs("描述字段包含明文密码. (计算机)",s.get("passwords_in_descriptions_computers"))
-    _cs("GPOs (孤立组策略对象)",s.get("gpo_orphaned"))
-    _cs("GPOs (未链接任何域 / OU 的组策略)",s.get("gpo_unlinked"))
-    _cs("GPOs (空白 / 从未编辑过的组策略)",s.get("gpo_empty"))
+    _cs("adminCount=1 (total)",             s.get("admincount1_total"), warn_above=20)
+    _cs("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"))
+    _cs("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"))
+    _cs("adminCount=1 (stale)",             s.get("admincount1_stale"))
+    _cs("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"))
+    _cs("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"))
+    _cs("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"))
+    _cs("GPOs (orphaned)",                  s.get("gpo_orphaned"))
+    _cs("GPOs (unlinked)",                  s.get("gpo_unlinked"))
+    _cs("GPOs (empty/never edited)",        s.get("gpo_empty"))
     # New stats (checks 25–35)
     print()
     gpp_acc = s.get("gpp_sysvol_accessible")
     if gpp_acc is False:
-        print(f"  {'GPP 明文密码扫描':<40} {Fore.YELLOW}SYSVOL目录无法访问{Style.RESET_ALL}")
+        print(f"  {'GPP cpassword scan':<40} {Fore.YELLOW}SYSVOL not accessible{Style.RESET_ALL}")
     else:
-        _cs("组策略首选项加密密码命中数 (漏洞MS14-025)",s.get("gpp_cpassword_count"))
-    _cs("AdminSDHolder 对象存在危险访问控制权限（ACE）",s.get("adminsdholder_risky_aces"))
-    _cs("存在 SID 历史属性的账号总数",s.get("sid_history_count"))
-    _cs("存在影子凭证的对象总数",s.get("shadow_credentials_count"))
-    _cs("允许使用 RC4 加密的服务账号",s.get("rc4_service_accounts"))
-    _cs("域控制器允许 RC4 加密",s.get("rc4_domain_controllers"))
-    _cs("未启用 AES 加密类型的管理员账号",s.get("admin_no_aes_encryption"))
-    _cs("特权管理组内包含外部安全主体（FSP）",s.get("foreign_security_principals_in_priv_groups"))
+        _cs("GPP cpassword hits (MS14-025)",     s.get("gpp_cpassword_count"))
+    _cs("AdminSDHolder risky ACEs",         s.get("adminsdholder_risky_aces"))
+    _cs("SID history (total accounts)",     s.get("sid_history_count"))
+    _cs("Shadow credentials (total)",       s.get("shadow_credentials_count"))
+    _cs("RC4-permitted service accounts",   s.get("rc4_service_accounts"))
+    _cs("RC4-permitted domain controllers", s.get("rc4_domain_controllers"))
+    _cs("Admin accts without AES enctype",  s.get("admin_no_aes_encryption"))
+    _cs("FSPs in privileged groups",        s.get("foreign_security_principals_in_priv_groups"))
     pre_ev = s.get("pre_win2k_everyone")
     pre_an = s.get("pre_win2k_anon")
     if pre_ev is not None:
@@ -346,18 +346,18 @@ def print_report(result: ScanResult):
         if pre_ev: tag += " [EVERYONE]"
         if pre_an: tag += " [ANON]"
         col = (Fore.RED+Style.BRIGHT) if (pre_ev or pre_an) else Fore.GREEN
-        print(f"  {'兼容 Windows 2000 访问权限':<40} {col}{pre_ev or pre_an}{tag}{Style.RESET_ALL}")
-    _cs("高危委派目标",s.get("dangerous_delegation_targets"))
-    _cs("孤立 AD 子网",s.get("orphaned_subnet_count"))
+        print(f"  {'Pre-Win2k group (dangerous members)':<40} {col}{pre_ev or pre_an}{tag}{Style.RESET_ALL}")
+    _cs("Dangerous delegation targets",     s.get("dangerous_delegation_targets"))
+    _cs("Orphaned AD subnets",              s.get("orphaned_subnet_count"))
     frs = s.get("sysvol_using_frs")
     if frs is not None:
         col = Fore.RED+Style.BRIGHT if frs else Fore.GREEN
-        print(f"  {'SYSVOL 使用老旧FRS文件复制服务':<40} {col}{frs}{Style.RESET_ALL}")
+        print(f"  {'SYSVOL uses legacy FRS':<40} {col}{frs}{Style.RESET_ALL}")
     rbcd_dom = s.get("rbcd_on_domain_object")
     if rbcd_dom is not None:
         col = Fore.RED+Style.BRIGHT if rbcd_dom else Fore.GREEN
-        print(f"  {'域对象反向约束委派':<40} {col}{rbcd_dom}{Style.RESET_ALL}")
-    _cs("域 / 域控反向约束委派（RBCD）",s.get("rbcd_on_dc_count"))
+        print(f"  {'RBCD on domain object':<40} {col}{rbcd_dom}{Style.RESET_ALL}")
+    _cs("RBCD on DC computer objects",      s.get("rbcd_on_dc_count"))
     print()
 
 
@@ -387,7 +387,7 @@ def export_json(result: ScanResult, path: str):
     }
     with open(path, "w", encoding="utf-8") as fp:
         json.dump(data, fp, indent=2, default=str)
-    print(f"[+] JSON 格式巡检报告 -> {path}")
+    print(f"[+] JSON report -> {path}")
 
 
 # ── HTML helpers ──────────────────────────────────────────────────────────────
@@ -497,22 +497,22 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
 
     # ── Original rows ──
     orig_rows = [
-        ("搭载已停止支持老旧操作系统的计算机数量",          s.get("deprecated_os_count"),               0),
-        ("开启无约束 Kerberos 委派的计算机对象数量",     s.get("unconstrained_delegation_computers"), 0),
-        ("开启无约束 Kerberos 委派的用户账号数量",     s.get("unconstrained_delegation_users"),     0),
-        ("带协议转换功能的约束委派对象数量",   s.get("constrained_delegation_proto_transition"), 0),
-        ("标准约束委派（无协议转换）对象数量",    s.get("constrained_delegation_standard"),    None),
-        ("部署了LAPS 但本地管理员密码为空的主机",      s.get("laps_missing"),                      0),
-        ("adminCount=1 特权保护对象总数",             s.get("admincount1_total"),                 None),
-        ("adminCount 残留标记的孤立管理员账号",          s.get("admincount1_orphaned"),              0),
-        ("adminCount=1 且已禁用的幽灵管理员账号",    s.get("admincount1_disabled"),              0),
-        ("adminCount=1 长期未登录僵死管理员账号",             s.get("admincount1_stale"),                 0),
-        ("账号描述中写明明文密码的管理员账号",      s.get("passwords_in_descriptions_admins"),  0),
-        ("描述内携带明文密码的普通域用户",       s.get("passwords_in_descriptions_users"),   0),
-        ("计算机对象备注里包含明文密码",   s.get("passwords_in_descriptions_computers"), 0),
-        ("孤立损坏组策略对象数量",                  s.get("gpo_orphaned"),                      0),
-        ("未关联任何域 / OU 的闲置组策略",                  s.get("gpo_unlinked"),                      0),
-        ("空白、从未配置修改过的组策略",        s.get("gpo_empty"),                         0),
+        ("Deprecated OS computers",          s.get("deprecated_os_count"),               0),
+        ("Unconstrained deleg. (comp.)",     s.get("unconstrained_delegation_computers"), 0),
+        ("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"),     0),
+        ("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"), 0),
+        ("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"),    None),
+        ("LAPS hosts missing password",      s.get("laps_missing"),                      0),
+        ("adminCount=1 (total)",             s.get("admincount1_total"),                 None),
+        ("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"),              0),
+        ("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"),              0),
+        ("adminCount=1 (stale)",             s.get("admincount1_stale"),                 0),
+        ("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"),  0),
+        ("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"),   0),
+        ("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"), 0),
+        ("GPOs (orphaned)",                  s.get("gpo_orphaned"),                      0),
+        ("GPOs (unlinked)",                  s.get("gpo_unlinked"),                      0),
+        ("GPOs (empty/never edited)",        s.get("gpo_empty"),                         0),
     ]
 
     # LAPS coverage percentage
@@ -591,7 +591,7 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
     return (
         '<div class="cat-section" style="margin-top:1rem">'
         '<div class="cat-header" onclick="toggle(this)">'
-        '<span class="cat-title">附加检测汇总</span>'
+        '<span class="cat-title">Additional Check Summary</span>'
         '<span class="chevron">&#9660;</span>'
         "</div>"
         '<div class="cat-body collapsed">'
@@ -774,7 +774,7 @@ def export_html(result: ScanResult, path: str):
 </script>
 </head>
 <body>
-<h1>ADPulse 活动目录安全扫描报告</h1>
+<h1>ADPulse Active Directory Security Report</h1>
 <div class="meta">
   Domain: <strong>{result.domain}</strong> &nbsp;|&nbsp;
   DC: <strong>{result.dc_ip}</strong> &nbsp;|&nbsp;
@@ -784,10 +784,10 @@ def export_html(result: ScanResult, path: str):
 <span class="level"> / 100 &nbsp;&mdash; {result.risk_level} RISK</span>
 <div class="summary">{summary_bars}</div>
 
-<h2>总览 — 最高危风险汇总</h2>
+<h2>At a Glance &mdash; Most Critical Findings</h2>
 {critical_findings_html}
 
-<h2>评分等级图例</h2>
+<h2>Scoring Legend</h2>
 <div class="legend">
   <div class="legend-score">
     <div class="legend-title">Risk Score</div>
@@ -796,40 +796,40 @@ def export_html(result: ScanResult, path: str):
     </div>
     <table class="legend-table">
       <tr><th>Score</th><th>Risk Level</th><th>Meaning</th></tr>
-      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">LOW</span></td><td>安全状态良好，仅存在轻微问题</td></tr>
-      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>存在明显安全缺陷，需尽快修复</td></tr>
-      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>存在大量高危漏洞</td></tr>
-      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>安全隐患极其严重，需立即处置</td></tr>
+      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">LOW</span></td><td>Good posture, minor issues only</td></tr>
+      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>Notable weaknesses to address</td></tr>
+      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>Significant vulnerabilities</td></tr>
+      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>Severe risks &mdash; immediate action</td></tr>
     </table>
   </div>
-  <div class="Scoring Legend">
+  <div class="legend-sev">
     <div class="legend-title">Severity Levels</div>
     <table class="legend-table">
       <tr><th>Severity</th><th>Deduction</th><th>Meaning</th></tr>
-      <tr><td><span class="badge" style="background:#dc2626">紧急的</span></td><td>20&ndash;25 pts</td><td>可直接利用漏洞，大概率会导致整个域完全沦陷</td></tr>
-      <tr><td><span class="badge" style="background:#ea580c">高危</span></td><td>10&ndash;15 pts</td><td>严重配置缺陷引发越权漏洞</td></tr>
-      <tr><td><span class="badge" style="background:#ca8a04">中危</span></td><td>5&ndash;10 pts</td><td>存在安全弱点，扩大攻击范围</td></tr>
-      <tr><td><span class="badge" style="background:#2563eb">低危</span></td><td>2&ndash;5 pts</td><td>轻微安全加固缺失</td></tr>
-      <tr><td><span class="badge" style="background:#6b7280">提示</span></td><td>0 pts</td><td>仅参考类信息，建议人工复核</td></tr>
+      <tr><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>20&ndash;25 pts</td><td>Directly exploitable, likely leads to full domain compromise</td></tr>
+      <tr><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>10&ndash;15 pts</td><td>Serious misconfiguration enabling privilege escalation</td></tr>
+      <tr><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>5&ndash;10 pts</td><td>Security weakness increasing attack surface</td></tr>
+      <tr><td><span class="badge" style="background:#2563eb">LOW</span></td><td>2&ndash;5 pts</td><td>Minor hardening gap</td></tr>
+      <tr><td><span class="badge" style="background:#6b7280">INFO</span></td><td>0 pts</td><td>Informational, manual review recommended</td></tr>
     </table>
   </div>
 </div>
 
-<h2>审计风险项</h2>
+<h2>Findings</h2>
 <div style="margin-bottom:.8rem">
   <button class="btn" onclick="expandAll()">Expand All</button>
   <button class="btn" onclick="collapseAll()">Collapse All</button>
 </div>
 {sections}
 
-<h2>统计数据</h2>
-<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">核心指标</h2>
+<h2>Statistics</h2>
+<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">Key Metrics</h2>
 {stat_cards_html}
 {new_checks_html}
 {template_inv_html}
 <div class="cat-section" style="margin-top:.6rem">
   <div class="cat-header" onclick="toggle(this)">
-    <span class="cat-title">域统计信息</span>
+    <span class="cat-title">Domain Statistics</span>
     <span class="chevron">&#9660;</span>
   </div>
   <div class="cat-body collapsed">
@@ -841,10 +841,10 @@ def export_html(result: ScanResult, path: str):
   </div>
 </div>
 
-<footer>ADPulse Active Directory 安全扫描器</footer>
+<footer>Generated by ADPulse Active Directory Security Scanner &mdash; for authorised use only</footer>
 </body>
 </html>"""
 
     with open(path, "w", encoding="utf-8") as fp:
         fp.write(html)
-    print(f"[+] HTML格式巡检报告 -> {path}")
+    print(f"[+] HTML report -> {path}")
