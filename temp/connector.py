@@ -1,16 +1,16 @@
 """
-支持哈希传递认证的 LDAP(S) 连接器。
+LDAP(S) connector with optional pass-the-hash authentication.
 
-不依赖 impacket 实现哈希传递的原理
+How PtH works here without impacket
 ────────────────────────────────────
-ldap3 的 NTLM 协议栈通过以下方式计算 NT 哈希：
+ldap3's NTLM stack derives the NT hash by computing:
     NT_hash = MD4(password.encode('utf-16-le'))
 
-对于哈希传递，我们已经有了 NT 哈希，需要跳过这一步计算。
-_pth_context() 上下文管理器会临时替换 hashlib.new('md4')，
-让其 .digest() 方法直接返回我们预先计算好的哈希值。
-该补丁仅在绑定调用期间生效，之后立即恢复 —— 因此不会影响
-搜索操作或其他线程。
+For pass-the-hash we already *have* the NT hash and need to skip that step.
+The _pth_context() context manager temporarily replaces hashlib.new('md4')
+with a stub whose .digest() returns our pre-computed hash directly.
+The patch is active only for the duration of the bind call, then immediately
+restored — so it cannot bleed into search operations or other threads.
 """
 
 import contextlib
@@ -22,7 +22,7 @@ from typing import Optional, List
 from ldap3 import Server, Connection, ALL, NTLM, SIMPLE, SUBTREE, ALL_ATTRIBUTES, Tls
 from ldap3.core.exceptions import LDAPException
 
-# ── 辅助函数 ───────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 EMPTY_LM_HEX = "aad3b435b51404eeaad3b435b51404ee"
 
@@ -38,13 +38,13 @@ def resolve_dc(domain: str) -> Optional[str]:
 
 def parse_hash(hash_str: str):
     """
-    解析 [LMHASH:]NTHASH 格式，返回 (lm_bytes, nt_bytes)。
+    Parse [LMHASH:]NTHASH and return (lm_bytes, nt_bytes).
 
-    支持的格式
+    Accepted formats
     ----------------
     31d6cfe0d16ae931b73c59d7e0c089c0
     aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0
-    :31d6cfe0d16ae931b73c59d7e0c089c0   (LM 为空 —— 冒号仍需保留)
+    :31d6cfe0d16ae931b73c59d7e0c089c0   (empty LM — colon still required)
     """
     parts = hash_str.strip().split(":")
     if len(parts) == 2:
@@ -59,36 +59,37 @@ def parse_hash(hash_str: str):
         nt_bytes = bytes.fromhex(nt_hex)
     except ValueError as exc:
         raise ValueError(
-            f"哈希格式无效 '{hash_str}'。"
-            "预期格式为 [LMHASH:]NTHASH 十六进制字符串。"
+            f"Invalid hash format '{hash_str}'. "
+            "Expected [LMHASH:]NTHASH as hex strings."
         ) from exc
 
     if len(nt_bytes) != 16:
-        raise ValueError(f"NT 哈希必须为 16 字节（32 个十六进制字符），当前为 {len(nt_bytes)} 字节。")
+        raise ValueError(f"NT hash must be 16 bytes (32 hex chars), got {len(nt_bytes)}.")
 
     return lm_bytes, nt_bytes
 
 
-# ── 哈希传递上下文管理器 ─────────────────────────────────────────────────────
+# ── Pass-the-hash context manager ─────────────────────────────────────────────
 
 @contextlib.contextmanager
 def _pth_context(nt_hash_bytes: bytes):
     """
-    临时替换 hashlib.new('md4')，使 ldap3 的 NTLM 实现
-    使用我们预先计算好的 NT 哈希，而不是从明文密码派生。
+    Temporarily replace hashlib.new('md4') so that ldap3's NTLM
+    implementation uses our pre-computed NT hash instead of deriving
+    one from a plaintext password.
 
-    该替换仅在 `with` 代码块执行期间生效，
-    即使发生异常也能保证被移除。
+    The replacement is active only while the `with` block is executing
+    and is guaranteed to be removed even if an exception is raised.
     """
     _orig_new = _stdlib_hashlib.new
 
     class _FakeMD4:
-        """模拟 hashlib 哈希对象；digest() 始终返回我们注入的哈希值。"""
+        """Mimics a hashlib hash object; digest() always returns our hash."""
         def __init__(self):
             self._data = b""
 
         def update(self, data: bytes) -> None:
-            # 接受（并忽略）数据 —— 我们始终返回注入的哈希值。
+            # Accept (and ignore) data — we always return the injected hash.
             self._data += data
 
         def digest(self) -> bytes:
@@ -117,7 +118,7 @@ def _pth_context(nt_hash_bytes: bytes):
         _stdlib_hashlib.new = _orig_new
 
 
-# ── 连接器 ─────────────────────────────────────────────────────────────────
+# ── Connector ─────────────────────────────────────────────────────────────────
 
 class ADConnector:
     def __init__(
@@ -150,7 +151,7 @@ class ADConnector:
     def _to_dn(domain: str) -> str:
         return ",".join(f"DC={p}" for p in domain.split("."))
 
-    # ── 公共连接入口点 ────────────────────────────────────────────────────
+    # ── Public connect entry-point ────────────────────────────────────────────
 
     def connect(self) -> bool:
         if self.use_ssl:
@@ -159,7 +160,7 @@ class ADConnector:
             print("[!] LDAPS 连接失败，自动降级使用 389 端口普通 LDAP 协议……")
         return self._try_ldap()
 
-    # ── LDAPS 安全连接 ─────────────────────────────────────────────────────────
+    # ── LDAPS ─────────────────────────────────────────────────────────────────
 
     def _try_ldaps(self) -> bool:
         tls = Tls(
@@ -188,7 +189,7 @@ class ADConnector:
                 print(f"[!] LDAPS attempt failed (auth={auth}, user={user}): {e}")
         return False
 
-    # ── LDAP 普通连接 ──────────────────────────────────────────────────────────
+    # ── LDAP ──────────────────────────────────────────────────────────────────
 
     def _try_ldap(self) -> bool:
         try:
@@ -210,16 +211,17 @@ class ADConnector:
             print(f"[!] LDAP 连接失败: {e}")
             return False
 
-    # ── 哈希传递绑定 ────────────────────────────────────────────────────
+    # ── Pass-the-hash bind ────────────────────────────────────────────────────
 
     def _ntlm_pth_bind(self, port: int) -> bool:
         """
-        使用预先计算的 NT 哈希进行 NTLM 绑定认证。
+        Bind using NTLM with a pre-computed NT hash.
 
-        ldap3 需要在密码字段中填入非空字符串来构建 NTLM 协商消息。
-        实际的哈希注入通过 _pth_context() 完成，它在 Connection() 调用
-        期间重写 hashlib.new('md4')，因此密码字符串不会被实际哈希
-        —— 直接返回我们的哈希字节。
+        ldap3 needs a non-empty string in the password field to build the
+        NTLM negotiate message.  The actual hash injection happens via
+        _pth_context(), which overrides hashlib.new('md4') for the duration
+        of the Connection() call so the password string is never actually
+        hashed — our bytes are returned directly.
         """
         proto = "LDAPS" if port == 636 else "LDAP"
         user  = f"{self.domain}\\{self.username}"
@@ -240,7 +242,7 @@ class ADConnector:
             print(f"[!] 哈希传递 {proto} 绑定认证失败 (端口 {port}): {e}")
             return False
 
-    # ── LDAP 搜索辅助函数 ───────────────────────────────────────────────────
+    # ── LDAP search helpers ───────────────────────────────────────────────────
 
     def search(
         self,
@@ -268,7 +270,7 @@ class ADConnector:
         r = self.search("(objectClass=domain)", base=self.base_dn)
         return r[0] if r else None
 
-    # ── 属性访问器 ───────────────────────────────────────────────────
+    # ── Attribute accessors ───────────────────────────────────────────────────
 
     def attr_int(self, entry, attr: str, default: int = 0) -> int:
         v = getattr(entry, attr, None)
@@ -295,7 +297,7 @@ class ADConnector:
         return [str(val)]
 
     def resolve_sid(self, sid: str) -> str:
-        """将 SID 字符串解析为 sAMAccountName，失败则返回原 SID。"""
+        """Resolve a SID string to sAMAccountName, or return the SID on failure."""
         try:
             results = self.search(
                 f"(objectSid={sid})",

@@ -25,26 +25,9 @@ SEV_BADGE_COLOR = {
     "INFO":     "#6b7280",
 }
 
-# 严重程度中文映射
-SEV_CN = {
-    "CRITICAL": "严重",
-    "HIGH":     "高危",
-    "MEDIUM":   "中危",
-    "LOW":      "低危",
-    "INFO":     "信息",
-}
-
-# 风险等级中文映射
-RISK_LEVEL_CN = {
-    "CRITICAL": "严重风险",
-    "HIGH":     "高风险",
-    "MEDIUM":   "中等风险",
-    "LOW":      "低风险",
-}
-
-# 在专用区域呈现的统计键，而非通用平面表格
+# Stats keys rendered in dedicated sections rather than the generic flat table
 _SPECIAL_STATS = {
-    # 原有
+    # original
     "adcs_template_inventory",
     "laps_covered", "laps_missing", "laps_total_hosts",
     "laps_legacy_schema", "laps_winlaps_schema",
@@ -56,7 +39,7 @@ _SPECIAL_STATS = {
     "passwords_in_descriptions_users", "passwords_in_descriptions_admins",
     "passwords_in_descriptions_computers",
     "gpo_disabled", "gpo_orphaned", "gpo_unlinked", "gpo_empty",
-    # 新增 — 检测项 25–35
+    # new – checks 25–35
     "gpp_sysvol_accessible", "gpp_cpassword_count",
     "adminsdholder_risky_aces",
     "sid_history_count",
@@ -82,7 +65,7 @@ _GLANCE_MAX  = 5
 _GLANCE_SEVS = {"CRITICAL", "HIGH"}
 
 
-# ── 概览区域 ───────────────────────────────────────────────────────────────
+# ── At-a-glance ───────────────────────────────────────────────────────────────
 
 def _top_critical_findings(result: ScanResult, max_n: int = _GLANCE_MAX):
     eligible = [f for f in result.findings if f.severity in _GLANCE_SEVS]
@@ -90,53 +73,53 @@ def _top_critical_findings(result: ScanResult, max_n: int = _GLANCE_MAX):
     return eligible[:max_n]
 
 
-# ── 统计卡片构建器 ─────────────────────────────────────────────────────────
+# ── Stat-card builder ─────────────────────────────────────────────────────────
 
 def _build_stat_cards(result: ScanResult) -> list:
     s     = result.stats
     cards = []
 
-    # LAPS 覆盖率
+    # LAPS coverage
     total = s.get("laps_total_hosts")
     if total is not None:
         missing  = s.get("laps_missing", 0)
         covered  = s.get("laps_covered", 0)
         pct_ok   = int(100 * covered / total) if total else 100
         col      = "#16a34a" if pct_ok == 100 else ("#ca8a04" if pct_ok >= 80 else "#dc2626")
-        cards.append({"label": "LAPS 覆盖率",
+        cards.append({"label": "LAPS Coverage",
                       "value": f"{pct_ok}%",
-                      "sub":   f"{covered}/{total} 台主机",
+                      "sub":   f"{covered}/{total} hosts",
                       "color": col})
 
-    # 已淘汰操作系统
+    # Deprecated OS
     dep = s.get("deprecated_os_count")
     if dep is not None:
-        cards.append({"label": "已淘汰操作系统",
+        cards.append({"label": "Deprecated OS",
                       "value": str(dep),
-                      "sub":   "活动计算机",
+                      "sub":   "active computers",
                       "color": "#dc2626" if dep > 0 else "#16a34a"})
 
-    # 不受约束委派
+    # Unconstrained delegation
     unc_c = s.get("unconstrained_delegation_computers")
     unc_u = s.get("unconstrained_delegation_users")
     if unc_c is not None:
         total_unc = (unc_c or 0) + (unc_u or 0)
-        cards.append({"label": "不受约束委派",
+        cards.append({"label": "Unconstrained Delegation",
                       "value": str(total_unc),
-                      "sub":   f"{unc_c} 台计算机 / {unc_u} 个用户",
+                      "sub":   f"{unc_c} computers / {unc_u} users",
                       "color": "#dc2626" if total_unc > 0 else "#16a34a"})
 
-    # adminCount=1 账户
+    # adminCount=1
     adm_total  = s.get("admincount1_total")
     adm_orphan = s.get("admincount1_orphaned")
     if adm_total is not None:
         col = "#dc2626" if adm_orphan else ("#ca8a04" if adm_total > 20 else "#16a34a")
-        cards.append({"label": "adminCount=1 账户",
+        cards.append({"label": "adminCount=1 Accounts",
                       "value": str(adm_total),
-                      "sub":   f"{adm_orphan} 个孤立" if adm_orphan else "无孤立账户",
+                      "sub":   f"{adm_orphan} orphaned" if adm_orphan else "no orphans",
                       "color": col})
 
-    # 描述字段中的密码
+    # Passwords in descriptions
     pwd_adm   = s.get("passwords_in_descriptions_admins", 0) or 0
     pwd_usr   = s.get("passwords_in_descriptions_users",  0) or 0
     pwd_cmp   = s.get("passwords_in_descriptions_computers", 0) or 0
@@ -144,134 +127,131 @@ def _build_stat_cards(result: ScanResult) -> list:
     if s.get("passwords_in_descriptions_admins") is not None or \
        s.get("passwords_in_descriptions_users")  is not None:
         col = "#dc2626" if pwd_adm else ("#ea580c" if pwd_total else "#16a34a")
-        cards.append({"label": "描述字段含密码",
+        cards.append({"label": "Passwords in Descriptions",
                       "value": str(pwd_total),
-                      "sub":   f"{pwd_adm} 管理员 / {pwd_usr} 用户 / {pwd_cmp} 计算机",
+                      "sub":   f"{pwd_adm} admin / {pwd_usr} user / {pwd_cmp} computer",
                       "color": col})
 
-    # GPO 卫生状况
+    # GPO hygiene
     gpo_total = s.get("gpo_count")
     gpo_bad   = (s.get("gpo_orphaned") or 0) + (s.get("gpo_unlinked") or 0)
     if gpo_total is not None:
         col = "#dc2626" if gpo_bad > 10 else ("#ca8a04" if gpo_bad else "#16a34a")
-        cards.append({"label": "组策略对象(GPO)",
+        cards.append({"label": "GPOs",
                       "value": str(gpo_total),
-                      "sub":   f"{gpo_bad} 个孤立/未链接",
+                      "sub":   f"{gpo_bad} orphaned/unlinked",
                       "color": col})
 
-    # ── 新增卡片（检测项 25–35）──────────────────────────────────────────────
+    # ── New cards (checks 25–35) ──────────────────────────────────────────────
 
     # GPP cpassword
     gpp_count = s.get("gpp_cpassword_count")
     if gpp_count is not None:
         col = "#dc2626" if gpp_count > 0 else "#16a34a"
         accessible = s.get("gpp_sysvol_accessible", False)
-        sub = f"{gpp_count} 个明文密码" if accessible else "SYSVOL 不可访问"
-        cards.append({"label": "GPP 明文密码(MS14-025)",
+        sub = f"{gpp_count} plaintext password(s)" if accessible else "SYSVOL not accessible"
+        cards.append({"label": "GPP cpassword (MS14-025)",
                       "value": str(gpp_count) if accessible else "?",
                       "sub":   sub,
                       "color": col})
 
-    # SID 历史记录
+    # SID history
     sid_hist = s.get("sid_history_count")
     if sid_hist is not None:
-        cards.append({"label": "SID 历史记录条目",
+        cards.append({"label": "SID History Entries",
                       "value": str(sid_hist),
-                      "sub":   "设置了 sIDHistory 的账户",
+                      "sub":   "accounts with sIDHistory set",
                       "color": "#dc2626" if sid_hist > 0 else "#16a34a"})
 
-    # 影子凭据
+    # Shadow credentials
     shadow = s.get("shadow_credentials_count")
     if shadow is not None:
-        cards.append({"label": "影子凭据",
+        cards.append({"label": "Shadow Credentials",
                       "value": str(shadow),
-                      "sub":   "msDS-KeyCredentialLink 条目",
+                      "sub":   "msDS-KeyCredentialLink entries",
                       "color": "#dc2626" if shadow > 0 else "#16a34a"})
 
-    # RC4 服务账户
+    # RC4 service accounts
     rc4_svc = s.get("rc4_service_accounts")
     if rc4_svc is not None:
-        cards.append({"label": "允许RC4的服务账户",
+        cards.append({"label": "RC4-Permitted Service Accts",
                       "value": str(rc4_svc),
-                      "sub":   "弱哈希可被Kerberoast攻击",
+                      "sub":   "Kerberoastable with weak hash",
                       "color": "#dc2626" if rc4_svc > 0 else "#16a34a"})
 
     # AdminSDHolder
     ash = s.get("adminsdholder_risky_aces")
     if ash is not None:
-        cards.append({"label": "AdminSDHolder异常ACE",
+        cards.append({"label": "AdminSDHolder Bad ACEs",
                       "value": str(ash),
-                      "sub":   "非特权写入ACE",
+                      "sub":   "non-privileged write ACEs",
                       "color": "#dc2626" if ash > 0 else "#16a34a"})
 
-    # 域/域控制器上的RBCD
+    # RBCD on domain / DCs
     rbcd_dom = s.get("rbcd_on_domain_object")
     rbcd_dc  = s.get("rbcd_on_dc_count", 0) or 0
     if rbcd_dom is not None:
         total_rbcd = (1 if rbcd_dom else 0) + rbcd_dc
-        cards.append({"label": "域/DC上的RBCD配置",
+        cards.append({"label": "RBCD on Domain/DCs",
                       "value": str(total_rbcd),
-                      "sub":   "受影响的域对象+DC对象",
+                      "sub":   "domain obj + DC objects affected",
                       "color": "#dc2626" if total_rbcd > 0 else "#16a34a"})
 
     return cards
 
 
-# ── 控制台辅助函数 ───────────────────────────────────────────────────────────
+# ── Console helpers ───────────────────────────────────────────────────────────
 
 def _cs(label: str, value, warn_above: int = 0):
     if value is None:
         return
     col   = (Fore.RED + Style.BRIGHT) if (isinstance(value, (int, float)) and value > warn_above) \
-        else (Fore.RED + Style.BRIGHT if value is True else Fore.GREEN)
+            else (Fore.RED + Style.BRIGHT if value is True else Fore.GREEN)
     reset = Style.RESET_ALL
     print(f"  {label:<40} {col}{value}{reset}")
 
 
-# ── 控制台报告 ────────────────────────────────────────────────────────────
+# ── Console report ────────────────────────────────────────────────────────────
 
 def print_report(result: ScanResult):
     W = 72
     print(f"\n{'='*W}")
-    print("  ADPulse 活动目录安全扫描报告")
+    print("  ADPulse ACTIVE DIRECTORY SECURITY SCAN REPORT")
     print(f"{'='*W}")
-    print(f"  目标域       : {result.domain}")
-    print(f"  域控制器     : {result.dc_ip}")
-    print(f"  扫描时间     : {result.scan_time}")
+    print(f"  Domain      : {result.domain}")
+    print(f"  DC          : {result.dc_ip}")
+    print(f"  Scanned     : {result.scan_time}")
     score = result.total_score
     sc    = Fore.GREEN if score >= 80 else (Fore.YELLOW if score >= 60 else Fore.RED)
-    risk_cn = RISK_LEVEL_CN.get(result.risk_level, result.risk_level)
-    print(f"  风险评分     : {sc}{score}/100  [{risk_cn}]{Style.RESET_ALL}")
+    print(f"  Risk Score  : {sc}{score}/100  [{result.risk_level}]{Style.RESET_ALL}")
     print(f"{'='*W}\n")
 
     counts = result.counts()
-    print("汇总统计:")
+    print("SUMMARY:")
     for sev in ("CRITICAL","HIGH","MEDIUM","LOW","INFO"):
         c = counts.get(sev, 0)
         if c:
-            sev_cn = SEV_CN.get(sev, sev)
-            print(f"  {SEV_COLOR[sev]}{sev_cn:<10}{Style.RESET_ALL}: {c} 项发现")
+            print(f"  {SEV_COLOR[sev]}{sev:<10}{Style.RESET_ALL}: {c} finding(s)")
 
     top = _top_critical_findings(result)
     print(f"\n{'─'*W}")
-    print("快速概览 — 最严重发现项:")
+    print("AT A GLANCE — MOST CRITICAL FINDINGS:")
     print(f"{'─'*W}")
     if top:
         for f in top:
             col = SEV_COLOR.get(f.severity, "")
-            sev_cn = SEV_CN.get(f.severity, f.severity)
-            print(f"  {col}[{sev_cn}]{Style.RESET_ALL}  {f.title}")
+            print(f"  {col}[{f.severity}]{Style.RESET_ALL}  {f.title}")
             print(f"    {f.description}")
             if f.recommendation:
                 print(f"    {Fore.GREEN}>> {f.recommendation}{Style.RESET_ALL}")
         print()
     else:
-        print(f"  {Fore.GREEN}无严重或高危级别的发现项。{Style.RESET_ALL}\n")
+        print(f"  {Fore.GREEN}No critical or high-severity findings.{Style.RESET_ALL}\n")
 
     cards = _build_stat_cards(result)
     if cards:
         print(f"{'─'*W}")
-        print("关键指标:")
+        print("KEY METRICS:")
         print(f"{'─'*W}")
         c_map = {
             "#dc2626": Fore.RED + Style.BRIGHT,
@@ -284,21 +264,20 @@ def print_report(result: ScanResult):
             print(f"  {card['label']:<38}{col}{card['value']:<8}{Style.RESET_ALL} ({card['sub']})")
 
     print(f"\n{'─'*W}")
-    print("详细发现（按严重程度排序）:")
+    print("FINDINGS (sorted by severity):")
     print(f"{'─'*W}\n")
 
     for f in result.findings_by_severity():
         if f.severity == "INFO":
             continue
         color = SEV_COLOR.get(f.severity, "")
-        sev_cn = SEV_CN.get(f.severity, f.severity)
-        print(f"  {color}[{sev_cn}]{Style.RESET_ALL} [{f.category}]  {f.title}")
+        print(f"  {color}[{f.severity}]{Style.RESET_ALL} [{f.category}]  {f.title}")
         print(f"    {f.description}")
         if f.details:
             for d in f.details[:10]:
                 print(f"      * {d}")
             if len(f.details) > 10:
-                print(f"      ... (还有 {len(f.details) - 10} 项)")
+                print(f"      ... (+{len(f.details) - 10} more)")
         if f.recommendation:
             print(f"    {Fore.GREEN}>> {f.recommendation}{Style.RESET_ALL}")
         if f.references:
@@ -309,80 +288,80 @@ def print_report(result: ScanResult):
     inventory = result.stats.get("adcs_template_inventory", [])
     if inventory:
         print(f"{'─'*W}")
-        print("ADCS 证书模板清单:")
+        print("ADCS TEMPLATE INVENTORY:")
         print(f"{'─'*W}")
         for entry in inventory:
             name, status = entry.split(": ", 1)
             if status == "OK":
-                col = Fore.GREEN; marker = "[正常]  "
+                col = Fore.GREEN; marker = "[OK]   "
             else:
-                col = Fore.RED;   marker = "[漏洞] "
+                col = Fore.RED;   marker = "[VULN] "
             print(f"  {col}{marker}{Style.RESET_ALL} {name:<45} {status}")
         print()
 
     s = result.stats
     print(f"{'─'*W}")
-    print("附加检测汇总:")
+    print("ADDITIONAL CHECK SUMMARY:")
     print(f"{'─'*W}")
-    # 原有统计
-    _cs("已淘汰操作系统计算机数",          s.get("deprecated_os_count"))
-    _cs("不受约束委派（计算机）", s.get("unconstrained_delegation_computers"))
-    _cs("不受约束委派（用户）",     s.get("unconstrained_delegation_users"))
-    _cs("约束委派（协议转换）",   s.get("constrained_delegation_proto_transition"))
-    _cs("约束委派（标准）",    s.get("constrained_delegation_standard"), warn_above=-1)
-    _cs("缺少LAPS的非DC主机数",      s.get("laps_missing"))
+    # Original stats
+    _cs("Deprecated OS computers",          s.get("deprecated_os_count"))
+    _cs("Unconstrained deleg. (computers)", s.get("unconstrained_delegation_computers"))
+    _cs("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"))
+    _cs("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"))
+    _cs("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"), warn_above=-1)
+    _cs("LAPS missing (non-DC hosts)",      s.get("laps_missing"))
     laps_t = s.get("laps_total_hosts")
     if laps_t:
         pct = int(100 * (s.get("laps_covered") or 0) / laps_t)
         col = Fore.GREEN if pct==100 else (Fore.YELLOW if pct>=80 else Fore.RED+Style.BRIGHT)
-        print(f"  {'LAPS 覆盖率':<40} {col}{pct}%{Style.RESET_ALL}  ({s.get('laps_covered')}/{laps_t})")
-    _cs("adminCount=1（总数）",             s.get("admincount1_total"), warn_above=20)
-    _cs("adminCount=1（孤立账户）",          s.get("admincount1_orphaned"))
-    _cs("adminCount=1（禁用/幽灵）",    s.get("admincount1_disabled"))
-    _cs("adminCount=1（长期未用）",             s.get("admincount1_stale"))
-    _cs("描述含密码（管理员）",      s.get("passwords_in_descriptions_admins"))
-    _cs("描述含密码（用户）",       s.get("passwords_in_descriptions_users"))
-    _cs("描述含密码（计算机）",   s.get("passwords_in_descriptions_computers"))
-    _cs("GPO（孤立）",                  s.get("gpo_orphaned"))
-    _cs("GPO（未链接）",                  s.get("gpo_unlinked"))
-    _cs("GPO（空/从未编辑）",        s.get("gpo_empty"))
-    # 新增统计（检测项 25–35）
+        print(f"  {'LAPS coverage':<40} {col}{pct}%{Style.RESET_ALL}  ({s.get('laps_covered')}/{laps_t})")
+    _cs("adminCount=1 (total)",             s.get("admincount1_total"), warn_above=20)
+    _cs("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"))
+    _cs("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"))
+    _cs("adminCount=1 (stale)",             s.get("admincount1_stale"))
+    _cs("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"))
+    _cs("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"))
+    _cs("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"))
+    _cs("GPOs (orphaned)",                  s.get("gpo_orphaned"))
+    _cs("GPOs (unlinked)",                  s.get("gpo_unlinked"))
+    _cs("GPOs (empty/never edited)",        s.get("gpo_empty"))
+    # New stats (checks 25–35)
     print()
     gpp_acc = s.get("gpp_sysvol_accessible")
     if gpp_acc is False:
-        print(f"  {'GPP 明文密码扫描':<40} {Fore.YELLOW}SYSVOL 不可访问{Style.RESET_ALL}")
+        print(f"  {'GPP cpassword scan':<40} {Fore.YELLOW}SYSVOL not accessible{Style.RESET_ALL}")
     else:
-        _cs("GPP 明文密码命中数(MS14-025)",     s.get("gpp_cpassword_count"))
-    _cs("AdminSDHolder 风险ACE",         s.get("adminsdholder_risky_aces"))
-    _cs("SID 历史记录（账户总数）",     s.get("sid_history_count"))
-    _cs("影子凭据（总数）",       s.get("shadow_credentials_count"))
-    _cs("允许RC4的服务账户数",   s.get("rc4_service_accounts"))
-    _cs("允许RC4的域控制器数", s.get("rc4_domain_controllers"))
-    _cs("无AES加密的管理员账户",  s.get("admin_no_aes_encryption"))
-    _cs("特权组中的外部安全主体",        s.get("foreign_security_principals_in_priv_groups"))
+        _cs("GPP cpassword hits (MS14-025)",     s.get("gpp_cpassword_count"))
+    _cs("AdminSDHolder risky ACEs",         s.get("adminsdholder_risky_aces"))
+    _cs("SID history (total accounts)",     s.get("sid_history_count"))
+    _cs("Shadow credentials (total)",       s.get("shadow_credentials_count"))
+    _cs("RC4-permitted service accounts",   s.get("rc4_service_accounts"))
+    _cs("RC4-permitted domain controllers", s.get("rc4_domain_controllers"))
+    _cs("Admin accts without AES enctype",  s.get("admin_no_aes_encryption"))
+    _cs("FSPs in privileged groups",        s.get("foreign_security_principals_in_priv_groups"))
     pre_ev = s.get("pre_win2k_everyone")
     pre_an = s.get("pre_win2k_anon")
     if pre_ev is not None:
         tag = ""
-        if pre_ev: tag += " [所有人]"
-        if pre_an: tag += " [匿名]"
+        if pre_ev: tag += " [EVERYONE]"
+        if pre_an: tag += " [ANON]"
         col = (Fore.RED+Style.BRIGHT) if (pre_ev or pre_an) else Fore.GREEN
-        print(f"  {'预Win2k组（危险成员）':<40} {col}{pre_ev or pre_an}{tag}{Style.RESET_ALL}")
-    _cs("危险委派目标数",     s.get("dangerous_delegation_targets"))
-    _cs("孤立的AD子网数",              s.get("orphaned_subnet_count"))
+        print(f"  {'Pre-Win2k group (dangerous members)':<40} {col}{pre_ev or pre_an}{tag}{Style.RESET_ALL}")
+    _cs("Dangerous delegation targets",     s.get("dangerous_delegation_targets"))
+    _cs("Orphaned AD subnets",              s.get("orphaned_subnet_count"))
     frs = s.get("sysvol_using_frs")
     if frs is not None:
         col = Fore.RED+Style.BRIGHT if frs else Fore.GREEN
-        print(f"  {'SYSVOL使用遗留FRS':<40} {col}{frs}{Style.RESET_ALL}")
+        print(f"  {'SYSVOL uses legacy FRS':<40} {col}{frs}{Style.RESET_ALL}")
     rbcd_dom = s.get("rbcd_on_domain_object")
     if rbcd_dom is not None:
         col = Fore.RED+Style.BRIGHT if rbcd_dom else Fore.GREEN
-        print(f"  {'域对象上的RBCD配置':<40} {col}{rbcd_dom}{Style.RESET_ALL}")
-    _cs("DC计算机对象上的RBCD",      s.get("rbcd_on_dc_count"))
+        print(f"  {'RBCD on domain object':<40} {col}{rbcd_dom}{Style.RESET_ALL}")
+    _cs("RBCD on DC computer objects",      s.get("rbcd_on_dc_count"))
     print()
 
 
-# ── JSON 导出 ──────────────────────────────────────────────────────────────
+# ── JSON export ───────────────────────────────────────────────────────────────
 
 def export_json(result: ScanResult, path: str):
     data = {
@@ -408,10 +387,10 @@ def export_json(result: ScanResult, path: str):
     }
     with open(path, "w", encoding="utf-8") as fp:
         json.dump(data, fp, indent=2, default=str)
-    print(f"[+] JSON 报告 -> {path}")
+    print(f"[+] JSON report -> {path}")
 
 
-# ── HTML 辅助函数 ──────────────────────────────────────────────────────────
+# ── HTML helpers ──────────────────────────────────────────────────────────────
 
 def _build_template_inventory_html(inventory: list) -> str:
     if not inventory:
@@ -422,7 +401,7 @@ def _build_template_inventory_html(inventory: list) -> str:
         name, status = entry.split(": ", 1)
         if status == "OK":
             clean_count += 1
-            badge = '<span class="badge" style="background:#16a34a">正常</span>'
+            badge = '<span class="badge" style="background:#16a34a">OK</span>'
         else:
             vuln_count += 1
             badge = "".join(
@@ -431,24 +410,24 @@ def _build_template_inventory_html(inventory: list) -> str:
             )
         rows += f"<tr><td><code>{name}</code></td><td>{badge}</td></tr>"
     header_badge = (
-        '<span class="badge" style="background:#dc2626">严重</span>'
+        '<span class="badge" style="background:#dc2626">CRITICAL</span>'
         if vuln_count else
-        '<span class="badge" style="background:#16a34a">正常</span>'
+        '<span class="badge" style="background:#16a34a">OK</span>'
     )
-    summary = (f"{vuln_count} 个有漏洞 / {clean_count} 个正常"
-               if vuln_count else f"全部 {clean_count} 个模板正常")
+    summary = (f"{vuln_count} vulnerable / {clean_count} clean"
+               if vuln_count else f"All {clean_count} templates clean")
     return (
         f'<div class="cat-section" style="margin-top:1rem">'
         f'<div class="cat-header" onclick="toggle(this)">'
         f'{header_badge}'
-        f'<span class="cat-title">ADCS 证书模板清单</span>'
+        f'<span class="cat-title">ADCS Certificate Template Inventory</span>'
         f'<span class="cat-count">{summary}</span>'
         f'<span class="chevron">&#9660;</span>'
         f"</div>"
         f'<div class="cat-body collapsed">'
         f"<table>"
         f"<colgroup><col style='width:60%'><col></colgroup>"
-        f"<tr><th>模板名称</th><th>状态</th></tr>{rows}</table>"
+        f"<tr><th>Template</th><th>Status</th></tr>{rows}</table>"
         f"</div></div>"
     )
 
@@ -476,21 +455,20 @@ def _build_critical_findings_html(result: ScanResult) -> str:
         return (
             '<div class="glance-empty">'
             '<span style="color:#16a34a;font-weight:bold">'
-            '&#10003; 无严重或高危级别的发现项</span>'
+            '&#10003; No critical or high-severity findings</span>'
             '</div>'
         )
     items = ""
     for f in top:
         col = SEV_BADGE_COLOR.get(f.severity, "#6b7280")
-        sev_cn = SEV_CN.get(f.severity, f.severity)
         rec = (f'<div class="glance-rec">{f.recommendation}</div>'
                if f.recommendation else "")
         items += (
             f'<div class="glance-item" style="border-left:3px solid {col}">'
             f'<div class="glance-header">'
-            f'<span class="badge" style="background:{col}">{sev_cn}</span>'
+            f'<span class="badge" style="background:{col}">{f.severity}</span>'
             f'<span class="glance-title">{f.title}</span>'
-            f'<span class="glance-score">-{f.risk_score} 分</span>'
+            f'<span class="glance-score">-{f.risk_score} pts</span>'
             f'</div>'
             f'<div class="glance-desc">{f.description}</div>'
             f'{rec}'
@@ -501,9 +479,9 @@ def _build_critical_findings_html(result: ScanResult) -> str:
 
 def _bool_badge(val) -> str:
     if val is True:
-        return '<span style="color:#dc2626;font-weight:bold">是 &#9888;</span>'
+        return '<span style="color:#dc2626;font-weight:bold">YES &#9888;</span>'
     if val is False:
-        return '<span style="color:#16a34a;font-weight:bold">否</span>'
+        return '<span style="color:#16a34a;font-weight:bold">No</span>'
     return str(val)
 
 
@@ -517,36 +495,36 @@ def _int_cell(val, warn_above: int = 0) -> str:
 def _build_new_checks_table_html(result: ScanResult) -> str:
     s = result.stats
 
-    # ── 原有行 ──
+    # ── Original rows ──
     orig_rows = [
-        ("已淘汰操作系统计算机数",          s.get("deprecated_os_count"),               0),
-        ("不受约束委派（计算机）",     s.get("unconstrained_delegation_computers"), 0),
-        ("不受约束委派（用户）",     s.get("unconstrained_delegation_users"),     0),
-        ("约束委派（协议转换）",   s.get("constrained_delegation_proto_transition"), 0),
-        ("约束委派（标准）",    s.get("constrained_delegation_standard"),    None),
-        ("缺少LAPS密码的主机数",      s.get("laps_missing"),                      0),
-        ("adminCount=1（总数）",             s.get("admincount1_total"),                 None),
-        ("adminCount=1（孤立账户）",          s.get("admincount1_orphaned"),              0),
-        ("adminCount=1（禁用/幽灵）",    s.get("admincount1_disabled"),              0),
-        ("adminCount=1（长期未用）",             s.get("admincount1_stale"),                 0),
-        ("描述含密码（管理员）",      s.get("passwords_in_descriptions_admins"),  0),
-        ("描述含密码（用户）",       s.get("passwords_in_descriptions_users"),   0),
-        ("描述含密码（计算机）",   s.get("passwords_in_descriptions_computers"), 0),
-        ("GPO（孤立）",                  s.get("gpo_orphaned"),                      0),
-        ("GPO（未链接）",                  s.get("gpo_unlinked"),                      0),
-        ("GPO（空/从未编辑）",        s.get("gpo_empty"),                         0),
+        ("Deprecated OS computers",          s.get("deprecated_os_count"),               0),
+        ("Unconstrained deleg. (comp.)",     s.get("unconstrained_delegation_computers"), 0),
+        ("Unconstrained deleg. (users)",     s.get("unconstrained_delegation_users"),     0),
+        ("Constrained deleg. (proto-xtn)",   s.get("constrained_delegation_proto_transition"), 0),
+        ("Constrained deleg. (standard)",    s.get("constrained_delegation_standard"),    None),
+        ("LAPS hosts missing password",      s.get("laps_missing"),                      0),
+        ("adminCount=1 (total)",             s.get("admincount1_total"),                 None),
+        ("adminCount=1 (orphaned)",          s.get("admincount1_orphaned"),              0),
+        ("adminCount=1 (disabled/ghost)",    s.get("admincount1_disabled"),              0),
+        ("adminCount=1 (stale)",             s.get("admincount1_stale"),                 0),
+        ("Passwords in desc. (admins)",      s.get("passwords_in_descriptions_admins"),  0),
+        ("Passwords in desc. (users)",       s.get("passwords_in_descriptions_users"),   0),
+        ("Passwords in desc. (computers)",   s.get("passwords_in_descriptions_computers"), 0),
+        ("GPOs (orphaned)",                  s.get("gpo_orphaned"),                      0),
+        ("GPOs (unlinked)",                  s.get("gpo_unlinked"),                      0),
+        ("GPOs (empty/never edited)",        s.get("gpo_empty"),                         0),
     ]
 
-    # LAPS 覆盖率百分比
+    # LAPS coverage percentage
     laps_t      = s.get("laps_total_hosts")
     laps_cov_html = ""
     if laps_t:
         pct = int(100 * (s.get("laps_covered") or 0) / laps_t)
         col = "#16a34a" if pct == 100 else ("#ca8a04" if pct >= 80 else "#dc2626")
         laps_cov_html = (
-            f"<tr><td>LAPS 覆盖率</td>"
+            f"<tr><td>LAPS coverage</td>"
             f'<td><span style="color:{col};font-weight:bold">{pct}%</span> '
-            f'({s.get("laps_covered")}/{laps_t} 台主机)</td></tr>'
+            f'({s.get("laps_covered")}/{laps_t} hosts)</td></tr>'
         )
 
     orig_html = ""
@@ -559,11 +537,11 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
             f'<td><span style="color:{col};font-weight:bold">{val}</span></td></tr>'
         )
 
-    # ── 新增行（检测项 25–35）──
+    # ── New rows (checks 25–35) ──
     gpp_acc   = s.get("gpp_sysvol_accessible")
     gpp_count = s.get("gpp_cpassword_count")
     if gpp_acc is False:
-        gpp_cell = '<span style="color:#ca8a04;font-weight:bold">SYSVOL 不可访问</span>'
+        gpp_cell = '<span style="color:#ca8a04;font-weight:bold">SYSVOL not accessible</span>'
     elif gpp_count is not None:
         gpp_cell = _int_cell(gpp_count, warn_above=0)
     else:
@@ -574,14 +552,14 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
     if pre_ev is not None:
         if pre_ev or pre_an:
             who = []
-            if pre_ev: who.append("所有人")
-            if pre_an: who.append("匿名用户")
+            if pre_ev: who.append("Everyone")
+            if pre_an: who.append("Anonymous")
             pre_cell = (
                 f'<span style="color:#dc2626;font-weight:bold">'
-                f'是 — {", ".join(who)} &#9888;</span>'
+                f'YES — {", ".join(who)} &#9888;</span>'
             )
         else:
-            pre_cell = '<span style="color:#16a34a;font-weight:bold">无危险成员</span>'
+            pre_cell = '<span style="color:#16a34a;font-weight:bold">No dangerous members</span>'
     else:
         pre_cell = "—"
 
@@ -590,21 +568,21 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
 
     new_rows_html = f"""
       <tr><td colspan="2" style="background:#0f1f35;color:#64748b;font-size:.78rem;
-          padding:6px 8px;letter-spacing:.04em">新增检测项（25–35）</td></tr>
-      <tr><td>GPP 明文密码命中数(MS14-025)</td><td>{gpp_cell}</td></tr>
-      <tr><td>AdminSDHolder 风险ACE</td><td>{_int_cell(s.get("adminsdholder_risky_aces"), 0)}</td></tr>
-      <tr><td>SID 历史记录账户数</td><td>{_int_cell(s.get("sid_history_count"), 0)}</td></tr>
-      <tr><td>影子凭据</td><td>{_int_cell(s.get("shadow_credentials_count"), 0)}</td></tr>
-      <tr><td>允许RC4的服务账户</td><td>{_int_cell(s.get("rc4_service_accounts"), 0)}</td></tr>
-      <tr><td>允许RC4的域控制器</td><td>{_int_cell(s.get("rc4_domain_controllers"), 0)}</td></tr>
-      <tr><td>无AES加密的管理员账户</td><td>{_int_cell(s.get("admin_no_aes_encryption"), 0)}</td></tr>
-      <tr><td>特权组中的外部安全主体</td><td>{_int_cell(s.get("foreign_security_principals_in_priv_groups"), 0)}</td></tr>
-      <tr><td>预Win2k组（危险成员）</td><td>{pre_cell}</td></tr>
-      <tr><td>危险委派目标（DC）</td><td>{_int_cell(s.get("dangerous_delegation_targets"), 0)}</td></tr>
-      <tr><td>孤立的AD子网</td><td>{_int_cell(s.get("orphaned_subnet_count"), 0)}</td></tr>
-      <tr><td>SYSVOL使用遗留FRS</td><td>{_bool_badge(s.get("sysvol_using_frs"))}</td></tr>
-      <tr><td>域对象上的RBCD</td><td>{_bool_badge(rbcd_dom)}</td></tr>
-      <tr><td>DC对象上的RBCD</td><td>{_int_cell(rbcd_dc, 0)}</td></tr>
+          padding:6px 8px;letter-spacing:.04em">NEW CHECKS (25–35)</td></tr>
+      <tr><td>GPP cpassword hits (MS14-025)</td><td>{gpp_cell}</td></tr>
+      <tr><td>AdminSDHolder risky ACEs</td><td>{_int_cell(s.get("adminsdholder_risky_aces"), 0)}</td></tr>
+      <tr><td>SID history accounts</td><td>{_int_cell(s.get("sid_history_count"), 0)}</td></tr>
+      <tr><td>Shadow credentials</td><td>{_int_cell(s.get("shadow_credentials_count"), 0)}</td></tr>
+      <tr><td>RC4-permitted service accounts</td><td>{_int_cell(s.get("rc4_service_accounts"), 0)}</td></tr>
+      <tr><td>RC4-permitted domain controllers</td><td>{_int_cell(s.get("rc4_domain_controllers"), 0)}</td></tr>
+      <tr><td>Admin accounts without AES enctype</td><td>{_int_cell(s.get("admin_no_aes_encryption"), 0)}</td></tr>
+      <tr><td>FSPs in privileged groups</td><td>{_int_cell(s.get("foreign_security_principals_in_priv_groups"), 0)}</td></tr>
+      <tr><td>Pre-Win2k group (dangerous members)</td><td>{pre_cell}</td></tr>
+      <tr><td>Dangerous delegation targets (DC)</td><td>{_int_cell(s.get("dangerous_delegation_targets"), 0)}</td></tr>
+      <tr><td>Orphaned AD subnets</td><td>{_int_cell(s.get("orphaned_subnet_count"), 0)}</td></tr>
+      <tr><td>SYSVOL using legacy FRS</td><td>{_bool_badge(s.get("sysvol_using_frs"))}</td></tr>
+      <tr><td>RBCD on domain object</td><td>{_bool_badge(rbcd_dom)}</td></tr>
+      <tr><td>RBCD on DC objects</td><td>{_int_cell(rbcd_dc, 0)}</td></tr>
     """
 
     if not orig_html and not laps_cov_html and not new_rows_html:
@@ -613,35 +591,33 @@ def _build_new_checks_table_html(result: ScanResult) -> str:
     return (
         '<div class="cat-section" style="margin-top:1rem">'
         '<div class="cat-header" onclick="toggle(this)">'
-        '<span class="cat-title">附加检测汇总</span>'
+        '<span class="cat-title">Additional Check Summary</span>'
         '<span class="chevron">&#9660;</span>'
         "</div>"
         '<div class="cat-body collapsed">'
         "<table>"
         "<colgroup><col style='width:60%'><col></colgroup>"
-        "<tr><th>检测项</th><th>结果</th></tr>"
+        "<tr><th>Check</th><th>Result</th></tr>"
         f"{laps_cov_html}{orig_html}{new_rows_html}"
         "</table></div></div>"
     )
 
 
-# ── HTML 导出 ───────────────────────────────────────────────────────────────
+# ── HTML export ───────────────────────────────────────────────────────────────
 
 def export_html(result: ScanResult, path: str):
     counts = result.counts()
     score  = result.total_score
     sc_col = "#16a34a" if score >= 80 else ("#ca8a04" if score >= 60 else "#dc2626")
-    risk_cn = RISK_LEVEL_CN.get(result.risk_level, result.risk_level)
 
     summary_bars = ""
     for sev in ("CRITICAL","HIGH","MEDIUM","LOW","INFO"):
         c = counts.get(sev, 0)
         if c:
             col = SEV_BADGE_COLOR[sev]
-            sev_cn = SEV_CN.get(sev, sev)
             summary_bars += (
                 f'<div class="sbar" style="background:{col}">'
-                f"<strong>{sev_cn}</strong><br>{c}</div>"
+                f"<strong>{sev}</strong><br>{c}</div>"
             )
 
     cat_map = defaultdict(list)
@@ -660,11 +636,9 @@ def export_html(result: ScanResult, path: str):
             continue
         worst   = cat_findings[0].severity
         cat_col = SEV_BADGE_COLOR.get(worst, "#6b7280")
-        worst_cn = SEV_CN.get(worst, worst)
         trows   = ""
         for f in cat_findings:
             col       = SEV_BADGE_COLOR.get(f.severity, "#6b7280")
-            sev_cn    = SEV_CN.get(f.severity, f.severity)
             dets      = "".join(f"<li>{d}</li>" for d in f.details)
             dets_html = f"<ul>{dets}</ul>" if dets else ""
             refs      = "".join(
@@ -673,7 +647,7 @@ def export_html(result: ScanResult, path: str):
             )
             trows += (
                 f"<tr>"
-                f'<td class="col-sev"><span class="badge" style="background:{col}">{sev_cn}</span></td>'
+                f'<td class="col-sev"><span class="badge" style="background:{col}">{f.severity}</span></td>'
                 f'<td class="col-finding"><strong>{f.title}</strong>'
                 f'<br><span class="desc">{f.description}</span>{dets_html}</td>'
                 f'<td class="col-rec">{f.recommendation}{refs}</td>'
@@ -683,25 +657,25 @@ def export_html(result: ScanResult, path: str):
         sections += (
             f'<div class="cat-section">'
             f'<div class="cat-header" onclick="toggle(this)">'
-            f'<span class="badge" style="background:{cat_col}">{worst_cn}</span>'
+            f'<span class="badge" style="background:{cat_col}">{worst}</span>'
             f'<span class="cat-title">{cat}</span>'
-            f'<span class="cat-count">{len(cat_findings)} 项发现</span>'
+            f'<span class="cat-count">{len(cat_findings)} finding(s)</span>'
             f'<span class="chevron">&#9660;</span>'
             f"</div>"
             f'<div class="cat-body">'
             f"<table>"
             f"{_FINDINGS_COLGROUP}"
             f"<tr>"
-            f'<th class="col-sev">严重程度</th>'
-            f'<th class="col-finding">发现项</th>'
-            f'<th class="col-rec">修复建议</th>'
-            f'<th class="col-score">扣分</th>'
+            f'<th class="col-sev">Severity</th>'
+            f'<th class="col-finding">Finding</th>'
+            f'<th class="col-rec">Recommendation</th>'
+            f'<th class="col-score">Score</th>'
             f"</tr>"
             f"{trows}"
             f"</table></div></div>"
         )
 
-    # 通用统计表 — 排除有专用区域的键
+    # Generic stats table — exclude keys with dedicated sections
     stat_rows = ""
     for k, v in result.stats.items():
         if k in _SPECIAL_STATS:
@@ -709,7 +683,7 @@ def export_html(result: ScanResult, path: str):
         if isinstance(v, list):
             vd = ", ".join(str(x) for x in v[:10])
             if len(v) > 10:
-                vd += f" ... (还有 {len(v)-10} 项)"
+                vd += f" ... (+{len(v)-10})"
         else:
             vd = str(v)
         stat_rows += f"<tr><td>{k}</td><td>{vd}</td></tr>"
@@ -721,13 +695,13 @@ def export_html(result: ScanResult, path: str):
         result.stats.get("adcs_template_inventory", []))
 
     html = f"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ADPulse 活动目录安全报告 - {result.domain}</title>
+<title>ADPulse Active Directory Security Report - {result.domain}</title>
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{font-family:"Segoe UI",Arial,"Microsoft YaHei",sans-serif;background:#0f172a;color:#e2e8f0;padding:2rem}}
+  body{{font-family:"Segoe UI",Arial,sans-serif;background:#0f172a;color:#e2e8f0;padding:2rem}}
   h1{{color:#38bdf8;font-size:1.8rem;margin-bottom:.3rem}}
   h2{{color:#94a3b8;font-size:1rem;font-weight:bold;margin:1.5rem 0 .5rem;
       text-transform:uppercase;letter-spacing:.05em}}
@@ -800,77 +774,77 @@ def export_html(result: ScanResult, path: str):
 </script>
 </head>
 <body>
-<h1>ADPulse 活动目录安全报告</h1>
+<h1>ADPulse Active Directory Security Report</h1>
 <div class="meta">
-  目标域: <strong>{result.domain}</strong> &nbsp;|&nbsp;
-  域控制器: <strong>{result.dc_ip}</strong> &nbsp;|&nbsp;
-  扫描时间: <strong>{result.scan_time}</strong>
+  Domain: <strong>{result.domain}</strong> &nbsp;|&nbsp;
+  DC: <strong>{result.dc_ip}</strong> &nbsp;|&nbsp;
+  Scanned: <strong>{result.scan_time}</strong>
 </div>
 <div class="score-box">{score}</div>
-<span class="level"> / 100 &nbsp;&mdash; {risk_cn}</span>
+<span class="level"> / 100 &nbsp;&mdash; {result.risk_level} RISK</span>
 <div class="summary">{summary_bars}</div>
 
-<h2>快速概览 &mdash; 最严重发现项</h2>
+<h2>At a Glance &mdash; Most Critical Findings</h2>
 {critical_findings_html}
 
-<h2>评分说明</h2>
+<h2>Scoring Legend</h2>
 <div class="legend">
   <div class="legend-score">
-    <div class="legend-title">风险评分</div>
+    <div class="legend-title">Risk Score</div>
     <div class="legend-desc">
-      初始分为 <strong>100</strong>；每个发现项扣除相应分数。
+      Starts at <strong>100</strong>; deductions applied per finding.
     </div>
     <table class="legend-table">
-      <tr><th>分数区间</th><th>风险等级</th><th>说明</th></tr>
-      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">低危</span></td><td>安全状况良好，仅有小问题</td></tr>
-      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">中危</span></td><td>存在需要处理的明显弱点</td></tr>
-      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">高危</span></td><td>存在重大安全漏洞</td></tr>
-      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">严重</span></td><td>严重风险 &mdash; 需立即采取行动</td></tr>
+      <tr><th>Score</th><th>Risk Level</th><th>Meaning</th></tr>
+      <tr><td>80&ndash;100</td><td><span class="badge" style="background:#16a34a">LOW</span></td><td>Good posture, minor issues only</td></tr>
+      <tr><td>60&ndash;79</td><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>Notable weaknesses to address</td></tr>
+      <tr><td>40&ndash;59</td><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>Significant vulnerabilities</td></tr>
+      <tr><td>0&ndash;39</td><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>Severe risks &mdash; immediate action</td></tr>
     </table>
   </div>
   <div class="legend-sev">
-    <div class="legend-title">严重程度等级</div>
+    <div class="legend-title">Severity Levels</div>
     <table class="legend-table">
-      <tr><th>严重程度</th><th>扣分值</th><th>说明</th></tr>
-      <tr><td><span class="badge" style="background:#dc2626">严重</span></td><td>20&ndash;25 分</td><td>可直接利用，可能导致完整域沦陷</td></tr>
-      <tr><td><span class="badge" style="background:#ea580c">高危</span></td><td>10&ndash;15 分</td><td>严重配置错误，可导致权限提升</td></tr>
-      <tr><td><span class="badge" style="background:#ca8a04">中危</span></td><td>5&ndash;10 分</td><td>安全弱点，扩大攻击面</td></tr>
-      <tr><td><span class="badge" style="background:#2563eb">低危</span></td><td>2&ndash;5 分</td><td>较小的加固缺口</td></tr>
-      <tr><td><span class="badge" style="background:#6b7280">信息</span></td><td>0 分</td><td>信息性内容，建议人工审查</td></tr>
+      <tr><th>Severity</th><th>Deduction</th><th>Meaning</th></tr>
+      <tr><td><span class="badge" style="background:#dc2626">CRITICAL</span></td><td>20&ndash;25 pts</td><td>Directly exploitable, likely leads to full domain compromise</td></tr>
+      <tr><td><span class="badge" style="background:#ea580c">HIGH</span></td><td>10&ndash;15 pts</td><td>Serious misconfiguration enabling privilege escalation</td></tr>
+      <tr><td><span class="badge" style="background:#ca8a04">MEDIUM</span></td><td>5&ndash;10 pts</td><td>Security weakness increasing attack surface</td></tr>
+      <tr><td><span class="badge" style="background:#2563eb">LOW</span></td><td>2&ndash;5 pts</td><td>Minor hardening gap</td></tr>
+      <tr><td><span class="badge" style="background:#6b7280">INFO</span></td><td>0 pts</td><td>Informational, manual review recommended</td></tr>
     </table>
   </div>
 </div>
 
-<h2>详细发现</h2>
+<h2>Findings</h2>
 <div style="margin-bottom:.8rem">
-  <button class="btn" onclick="expandAll()">全部展开</button>
-  <button class="btn" onclick="collapseAll()">全部折叠</button>
+  <button class="btn" onclick="expandAll()">Expand All</button>
+  <button class="btn" onclick="collapseAll()">Collapse All</button>
 </div>
 {sections}
 
-<h2>统计信息</h2>
-<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">关键指标</h2>
+<h2>Statistics</h2>
+<h2 style="margin-top:0;color:#64748b;font-size:.85rem;text-transform:none;letter-spacing:0">Key Metrics</h2>
 {stat_cards_html}
 {new_checks_html}
 {template_inv_html}
 <div class="cat-section" style="margin-top:.6rem">
   <div class="cat-header" onclick="toggle(this)">
-    <span class="cat-title">域统计数据</span>
+    <span class="cat-title">Domain Statistics</span>
     <span class="chevron">&#9660;</span>
   </div>
   <div class="cat-body collapsed">
     <table class="stats-grid" style="table-layout:fixed">
       <colgroup><col style="width:35%"><col></colgroup>
-      <tr><th>键名</th><th>值</th></tr>
+      <tr><th>Key</th><th>Value</th></tr>
       {stat_rows}
     </table>
   </div>
 </div>
 
-<footer>由 ADPulse 活动目录安全扫描器生成 &mdash; 仅限授权使用</footer>
+<footer>Generated by ADPulse Active Directory Security Scanner &mdash; for authorised use only</footer>
 </body>
 </html>"""
 
     with open(path, "w", encoding="utf-8") as fp:
         fp.write(html)
-    print(f"[+] HTML 报告 -> {path}")
+    print(f"[+] HTML report -> {path}")

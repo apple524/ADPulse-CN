@@ -659,121 +659,121 @@ def check_password_policy(ad: ADConnector) -> Tuple[List[F], Dict]:
     if min_len < 8:
         findings.append(
             F(
-                "密码策略",
-                "最小密码长度不足8位",
+                "Password Policy",
+                "Minimum Password Length < 8",
                 "HIGH",
                 f"Minimum length is {min_len}.",
-                recommendation="将最小密码长度设置为 >= 14。",
+                recommendation="Set minimum password length to >= 14.",
                 risk_score=15,
             )
         )
     elif min_len < 12:
         findings.append(
             F(
-                "密码策略",
-                "最小密码长度不足12位",
+                "Password Policy",
+                "Minimum Password Length < 12",
                 "MEDIUM",
                 f"Minimum length is {min_len}.",
-                recommendation="考虑提升至14个字符以上。",
+                recommendation="Consider raising to 14+ characters.",
                 risk_score=5,
             )
         )
     if history < 10:
         findings.append(
             F(
-                "密码策略",
-                "密码历史记录太短",
+                "Password Policy",
+                "Password History Too Short",
                 "MEDIUM",
                 f"History is {history} (recommended >= 24).",
-                recommendation="将密码历史记录设置为24。",
+                recommendation="Set password history to 24.",
                 risk_score=5,
             )
         )
     if max_age == 0:
         findings.append(
             F(
-                "密码策略",
-                "密码永不过期",
+                "Password Policy",
+                "Passwords Never Expire",
                 "MEDIUM",
-                "未配置密码最长使用期限。",
-                recommendation="将密码最长使用期限设置为 <= 90天。",
+                "No maximum password age configured.",
+                recommendation="Set max password age to <= 90 days.",
                 risk_score=10,
             )
         )
     elif max_age > 365:
         findings.append(
             F(
-                "密码策略",
-                "密码最长使用期限超过1年",
+                "Password Policy",
+                "Password Max Age > 1 Year",
                 "LOW",
                 f"Max password age is {max_age} days.",
-                recommendation="减少至 <= 90天。",
+                recommendation="Reduce to <= 90 days.",
                 risk_score=5,
             )
         )
     if lockout == 0:
         findings.append(
             F(
-                "密码策略",
-                "无账户锁定策略",
+                "Password Policy",
+                "No Account Lockout Policy",
                 "CRITICAL",
-                "锁定阈值为0 —— 允许无限制的密码猜测。",
-                recommendation="将锁定阈值设置为5-10次尝试。",
+                "Lockout threshold is 0 -- unlimited password guessing allowed.",
+                recommendation="Set lockout threshold to 5-10 attempts.",
                 risk_score=20,
             )
         )
     elif lockout > 10:
         findings.append(
             F(
-                "密码策略",
-                "锁定阈值过高",
+                "Password Policy",
+                "Lockout Threshold Too High",
                 "LOW",
                 f"Lockout threshold is {lockout}.",
-                recommendation="减少至 <= 10次失败尝试。",
+                recommendation="Reduce to <= 10 failed attempts.",
                 risk_score=3,
             )
         )
     if lockout > 0 and lock_dur == 0:
         findings.append(
             F(
-                "密码策略",
-                "锁定需管理员手动解锁",
+                "Password Policy",
+                "Lockout Requires Manual Admin Unlock",
                 "INFO",
-                "锁定时长为0 —— 管理员必须手动解锁账户。",
-                recommendation="将锁定时长设置为15-30分钟（除非有特殊需求）。",
+                "Lockout duration is 0 -- admin must manually unlock accounts.",
+                recommendation="Set lockout duration to 15-30 minutes unless intentional.",
                 risk_score=0,
             )
         )
     if not (pwd_props & 1):
         findings.append(
             F(
-                "密码策略",
-                "密码复杂度已禁用",
+                "Password Policy",
+                "Password Complexity Disabled",
                 "MEDIUM",
-                "密码复杂度要求已关闭。",
-                recommendation="启用密码复杂度或强制使用密码短语策略。",
+                "Complexity requirements are off.",
+                recommendation="Enable password complexity or enforce passphrase policy.",
                 risk_score=10,
             )
         )
     if pwd_props & 16:
         findings.append(
             F(
-                "密码策略",
-                "已启用可逆加密（域策略）",
+                "Password Policy",
+                "Reversible Encryption Enabled (Domain Policy)",
                 "CRITICAL",
-                "密码以可逆加密方式存储（等同于明文）。",
-                recommendation="立即禁用可逆密码加密。",
+                "Passwords stored with reversible encryption (effectively plaintext).",
+                recommendation="Disable reversible password encryption immediately.",
                 risk_score=25,
             )
         )
     if min_age == 0:
         findings.append(
             F(
-                "密码策略",
-                "无最小密码使用期限",
+                "Password Policy",
+                "No Minimum Password Age",
                 "LOW",
-                "用户可立即修改密码，绕过历史记录控制。",
-                recommendation="将最小密码使用期限设置为1天。",
+                "Users can change passwords immediately, bypassing history controls.",
+                recommendation="Set minimum password age to 1 day.",
                 risk_score=3,
             )
         )
@@ -793,12 +793,12 @@ def check_password_policy(ad: ADConnector) -> Tuple[List[F], Dict]:
         if pso_issues:
             findings.append(
                 F(
-                    "密码策略",
-                    "细粒度密码策略(PSO)强度不足",
+                    "Password Policy",
+                    "Weak Fine-Grained Password Policy (PSO)",
                     "HIGH",
                     f"{len(pso_issues)} PSO(s) have weak settings.",
                     details=pso_issues,
-                    recommendation="审查并加固所有细粒度密码策略(PSO)。",
+                    recommendation="Review and harden all PSOs.",
                     risk_score=10,
                 )
             )
@@ -861,7 +861,7 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
         if gname in SENSITIVE and len(names) > 5:
             findings.append(
                 F(
-                    "特权账户",
+                    "Privileged Accounts",
                     f"Too Many Members in '{gname}'",
                     "HIGH",
                     f"{len(names)} members (recommended <= 5).",
@@ -873,19 +873,19 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
         if stale and gname in SENSITIVE:
             findings.append(
                 F(
-                    "特权账户",
+                    "Privileged Accounts",
                     f"Stale Members in '{gname}'",
                     "HIGH",
                     f"{len(stale)} member(s) inactive for 90+ days.",
                     details=stale,
-                    recommendation="禁用或移除长期未使用的特权账户。",
+                    recommendation="Disable or remove stale privileged accounts.",
                     risk_score=12,
                 )
             )
         if no_expire and gname in SENSITIVE:
             findings.append(
                 F(
-                    "特权账户",
+                    "Privileged Accounts",
                     f"Non-Expiring Passwords in '{gname}'",
                     "MEDIUM",
                     f"{len(no_expire)} admin(s) with non-expiring passwords.",
@@ -897,12 +897,12 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
         if pwd_in_desc:
             findings.append(
                 F(
-                    "特权账户",
-                    "账户描述字段中可能存储密码",
+                    "Privileged Accounts",
+                    "Password Stored in Account Description",
                     "HIGH",
                     f"{len(pwd_in_desc)} account(s) may have passwords in the Description field.",
                     details=pwd_in_desc,
-                    recommendation="从描述字段中移除凭证。",
+                    recommendation="Remove credentials from description fields.",
                     risk_score=15,
                 )
             )
@@ -919,11 +919,11 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
             if not (uac & UAC_DISABLED):
                 findings.append(
                     F(
-                        "特权账户",
-                        "内置管理员账户处于启用状态",
+                        "Privileged Accounts",
+                        "Built-in Administrator Account Enabled",
                         "MEDIUM",
-                        "内置管理员账户(RID-500)处于活动状态。",
-                        recommendation="重命名和/或创建诱饵管理员账户。考虑禁用原账户。",
+                        "The built-in Administrator account (RID-500) is active.",
+                        recommendation="Rename and/or create a decoy Administrator account. Consider disabling it.",
                         risk_score=8,
                     )
                 )
@@ -931,11 +931,11 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
             if llt and _days_since(llt) < 30:
                 findings.append(
                     F(
-                        "特权账户",
-                        "内置管理员账户近期被使用",
+                        "Privileged Accounts",
+                        "Built-in Administrator Recently Used",
                         "HIGH",
-                        "RID-500管理员近期有登录 —— 不应用于日常任务。",
-                        recommendation="使用命名管理员账户；仅将RID-500保留为紧急账户使用。",
+                        "RID-500 administrator logged in recently -- should not be used for daily tasks.",
+                        recommendation="Use named admin accounts; reserve RID-500 for break-glass only.",
                         risk_score=12,
                     )
                 )
@@ -946,11 +946,11 @@ def check_privileged_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
         if days is None or days > 180:
             findings.append(
                 F(
-                    "特权账户",
-                    "krbtgt账户密码近期未重置",
+                    "Privileged Accounts",
+                    "krbtgt Password Not Reset Recently",
                     "HIGH",
                     f"krbtgt password is {days if days is not None else 'unknown'} days old.",
-                    recommendation="按照微软指南，分两次重置krbtgt密码（中间需间隔）。",
+                    recommendation="Reset krbtgt password twice (with pause) following Microsoft guidance.",
                     risk_score=15,
                     references=[
                         "https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/ad-forest-recovery-resetting-the-krbtgt-password"
@@ -997,12 +997,12 @@ def check_kerberos(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "CRITICAL" if kerb_admin else "HIGH"
         findings.append(
             F(
-                "Kerberos认证",
+                "Kerberos",
                 "Kerberoastable Service Accounts",
                 sev,
                 f"{len(kerb)} user(s) with SPNs can be Kerberoasted offline.",
                 details=kerb_details,
-                recommendation="使用组托管服务账户(gMSA)，移除不必要的SPN，强制使用强密码（25+字符）。",
+                recommendation="Use gMSA accounts, remove unnecessary SPNs, enforce strong passwords (25+ chars).",
                 risk_score=20 if sev == "CRITICAL" else 15,
                 references=["https://attack.mitre.org/techniques/T1558/003/"],
             )
@@ -1010,13 +1010,13 @@ def check_kerberos(ad: ADConnector) -> Tuple[List[F], Dict]:
     if kerb_neverexpire:
         findings.append(
             F(
-                "Kerberos认证",
-                "高价值Kerberoast目标：管理员+SPN+密码永不过期",
+                "Kerberos",
+                "High-Value Kerberoast Targets: Admin + SPN + PasswordNeverExpires",
                 "CRITICAL",
                 f"{len(kerb_neverexpire)} admin service account(s) have SPNs AND non-expiring passwords. "
                 "These are the highest-value Kerberoasting targets -- stale RC4 hashes crack easily.",
                 details=kerb_neverexpire,
-                recommendation="立即轮换密码；迁移至gMSA；移除密码永不过期设置。",
+                recommendation="Rotate passwords immediately; migrate to gMSA; remove PasswordNeverExpires.",
                 risk_score=25,
                 references=["https://attack.mitre.org/techniques/T1558/003/"],
             )
@@ -1024,12 +1024,12 @@ def check_kerberos(ad: ADConnector) -> Tuple[List[F], Dict]:
     if kerb_stale_pwd:
         findings.append(
             F(
-                "Kerberos认证",
-                "存在老旧密码的Kerberoastable账户",
+                "Kerberos",
+                "Kerberoastable Accounts with Old Passwords",
                 "HIGH",
                 f"{len(kerb_stale_pwd)} account(s) with SPNs have passwords > 1 year old.",
                 details=kerb_stale_pwd,
-                recommendation="定期轮换服务账户密码。",
+                recommendation="Rotate service account passwords regularly.",
                 risk_score=10,
             )
         )
@@ -1047,12 +1047,12 @@ def check_kerberos(ad: ADConnector) -> Tuple[List[F], Dict]:
             details.append(f"{n}" + (" [ADMIN]" if adm else ""))
         findings.append(
             F(
-                "Kerberos认证",
-                "存在AS-REP Roast攻击风险的账户",
+                "Kerberos",
+                "AS-REP Roastable Accounts",
                 "HIGH",
                 f"{len(asrep)} account(s) have Kerberos pre-authentication disabled.",
                 details=details,
-                recommendation="在所有账户上启用Kerberos预认证，除非确有必要。",
+                recommendation="Enable Kerberos pre-auth on all accounts unless strictly required.",
                 risk_score=15,
                 references=["https://attack.mitre.org/techniques/T1558/004/"],
             )
@@ -1066,12 +1066,12 @@ def check_kerberos(ad: ADConnector) -> Tuple[List[F], Dict]:
     if des:
         findings.append(
             F(
-                "Kerberos认证",
-                "账户仅使用DES加密",
+                "Kerberos",
+                "Accounts Using DES Encryption Only",
                 "HIGH",
                 f"{len(des)} account(s) restricted to DES (broken) Kerberos encryption.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in des],
-                recommendation="移除'为此账户使用DES加密类型'标志。",
+                recommendation="Remove 'Use DES encryption types for this account' flag.",
                 risk_score=12,
             )
         )
@@ -1098,12 +1098,12 @@ def check_unconstrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "委派配置",
-                "非域控制器计算机配置了不受约束委派",
+                "Delegation",
+                "Non-DC Computers with Unconstrained Delegation",
                 "CRITICAL",
                 f"{len(unc_computers)} computer(s) (excluding DCs) are trusted for unconstrained delegation.",
                 details=details,
-                recommendation="移除'信任此计算机以委派到任何服务'标志。迁移至基于资源的约束委派(RBCD)。",
+                recommendation="Remove the 'Trust this computer for delegation to any service' flag. Migrate to RBCD.",
                 risk_score=25,
                 references=["https://attack.mitre.org/techniques/T1134/001/"],
             )
@@ -1111,8 +1111,8 @@ def check_unconstrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "委派配置",
-                "无非域控制器计算机配置不受约束委派",
+                "Delegation",
+                "No Non-DC Computers with Unconstrained Delegation",
                 "INFO",
                 "Unconstrained delegation is not configured on any non-DC computer.",
                 risk_score=0,
@@ -1133,12 +1133,12 @@ def check_unconstrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
             details.append(f"{name}{tag}")
         findings.append(
             F(
-                "委派配置",
-                "用户账户配置了不受约束委派",
+                "Delegation",
+                "User Accounts with Unconstrained Delegation",
                 "CRITICAL",
                 f"{len(unc_users)} enabled user account(s) are trusted for unconstrained delegation.",
                 details=details,
-                recommendation="清除所有用户账户的不受约束委派标志。",
+                recommendation="Clear the unconstrained delegation flag from all user accounts.",
                 risk_score=25,
                 references=["https://attack.mitre.org/techniques/T1134/001/"],
             )
@@ -1146,8 +1146,8 @@ def check_unconstrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "委派配置",
-                "无用户账户配置不受约束委派",
+                "Delegation",
+                "No User Accounts with Unconstrained Delegation",
                 "INFO",
                 "No enabled user accounts have unconstrained delegation configured.",
                 risk_score=0,
@@ -1160,15 +1160,15 @@ def check_unconstrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
     if rbcd:
         findings.append(
             F(
-                "委派配置",
-                "计算机配置了基于资源的约束委派(RBCD)",
+                "Delegation",
+                "Computers with RBCD Configured",
                 "INFO",
                 f"{len(rbcd)} object(s) have msDS-AllowedToActOnBehalfOfOtherIdentity set.",
                 details=[
                     ad.attr_str(u, "dNSHostName") or ad.attr_str(u, "sAMAccountName")
                     for u in rbcd
                 ],
-                recommendation="验证所有RBCD配置均为有意配置且保持最小权限。",
+                recommendation="Verify all RBCD configurations are intentional and minimal.",
                 risk_score=0,
             )
         )
@@ -1210,12 +1210,12 @@ def check_constrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
         )
         findings.append(
             F(
-                "委派配置",
+                "Delegation",
                 "Constrained Delegation with Protocol Transition (S4U2Self)",
                 sev,
                 f"{len(proto_trans)} account(s) have TrustedToAuthForDelegation set.",
                 details=details,
-                recommendation="移除非必要的TrustedToAuthForDelegation设置。",
+                recommendation="Remove TrustedToAuthForDelegation where not strictly required.",
                 risk_score=18 if sev == "CRITICAL" else 12,
                 references=["https://attack.mitre.org/techniques/T1134/001/"],
             )
@@ -1223,8 +1223,8 @@ def check_constrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "委派配置",
-                "未配置协议转换(S4U2Self)委派",
+                "Delegation",
+                "No Protocol Transition (S4U2Self) Delegation Configured",
                 "INFO",
                 "No accounts have the TrustedToAuthForDelegation flag set.",
                 risk_score=0,
@@ -1238,20 +1238,20 @@ def check_constrained_delegation(ad: ADConnector) -> Tuple[List[F], Dict]:
             details.append(f"{name} -> {', '.join(targets[:5])}")
         findings.append(
             F(
-                "委派配置",
-                "已配置约束委派",
+                "Delegation",
+                "Constrained Delegation Configured",
                 "MEDIUM",
                 f"{len(constrained)} account(s) have msDS-AllowedToDelegateTo set.",
                 details=details,
-                recommendation="审计委派目标并移除不必要的条目。",
+                recommendation="Audit delegation targets and remove unnecessary entries.",
                 risk_score=5,
             )
         )
     else:
         findings.append(
             F(
-                "委派配置",
-                "未配置标准约束委派",
+                "Delegation",
+                "No Standard Constrained Delegation Configured",
                 "INFO",
                 "No accounts have msDS-AllowedToDelegateTo set (without protocol transition).",
                 risk_score=0,
@@ -1277,8 +1277,8 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not cas:
         findings.append(
             F(
-                "证书服务",
-                "未找到证书颁发机构",
+                "ADCS",
+                "No Certificate Authority Found",
                 "INFO",
                 "ADCS not detected in this domain.",
                 risk_score=0,
@@ -1288,7 +1288,7 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     stats["cas"] = [ad.attr_str(c, "cn") for c in cas]
     findings.append(
         F(
-            "证书服务",
+            "ADCS",
             f"{len(cas)} Certificate Authorit{'y' if len(cas)==1 else 'ies'} Found",
             "INFO",
             f"CAs: {', '.join(stats['cas'])}",
@@ -1340,13 +1340,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc1:
         findings.append(
             F(
-                "证书服务",
-                "ESC1 - 申请者可自定义SAN+客户端认证",
+                "ADCS",
+                "ESC1 - Enrollee-Supplied SAN + Client Auth",
                 "CRITICAL",
                 f"{len(esc1)} template(s) allow domain privilege escalation via SAN manipulation.",
                 details=esc1,
                 risk_score=25,
-                recommendation="禁用'在请求中提供'或启用经理审批。",
+                recommendation="Disable 'Supply in the request' or enable manager approval.",
                 references=[
                     "https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf"
                 ],
@@ -1367,13 +1367,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc2:
         findings.append(
             F(
-                "证书服务",
-                "ESC2 - 任意用途/无EKU限制的证书模板",
+                "ADCS",
+                "ESC2 - Any Purpose / No EKU Templates",
                 "CRITICAL",
                 f"{len(esc2)} template(s) with overly broad EKU.",
                 details=esc2,
                 risk_score=20,
-                recommendation="将EKU限制为仅特定必需用途。",
+                recommendation="Restrict EKU to specific required purposes only.",
             )
         )
     # ESC3
@@ -1387,13 +1387,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc3:
         findings.append(
             F(
-                "证书服务",
-                "ESC3 - 注册代理证书模板",
+                "ADCS",
+                "ESC3 - Enrollment Agent Templates",
                 "HIGH",
                 f"{len(esc3)} enrollment agent template(s) without approval.",
                 details=esc3,
                 risk_score=15,
-                recommendation="在注册代理模板上启用经理审批。",
+                recommendation="Enable manager approval on enrollment agent templates.",
             )
         )
     cert_authorities_base = f"CN=Certification Authorities,{pki_base}"
@@ -1408,8 +1408,8 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
         if ca_configs and ad.attr_int(ca_configs[0], "flags") & 0x00040000:
             findings.append(
                 F(
-                    "证书服务",
-                    "ESC6 - CA启用了EDITF_ATTRIBUTESUBJECTALTNAME2标志",
+                    "ADCS",
+                    "ESC6 - CA EDITF_ATTRIBUTESUBJECTALTNAME2 Enabled",
                     "CRITICAL",
                     f"CA '{ca_name}' allows arbitrary SAN on any request.",
                     recommendation=(
@@ -1427,11 +1427,11 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
                 urllib.request.urlopen(f"http://{host}/certsrv/", timeout=3)
                 findings.append(
                     F(
-                        "证书服务",
-                        "ESC8 - HTTP证书注册端点可访问",
+                        "ADCS",
+                        "ESC8 - HTTP Web Enrollment Endpoint Accessible",
                         "CRITICAL",
                         f"certsrv is available over HTTP on {host} -- NTLM relay to AD CS possible.",
-                        recommendation="在证书服务上启用HTTPS+EPA。尽可能禁用NTLM。",
+                        recommendation="Enable HTTPS + EPA on certsrv. Disable NTLM where possible.",
                         risk_score=25,
                     )
                 )
@@ -1448,13 +1448,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc9:
         findings.append(
             F(
-                "证书服务",
-                "ESC9 - 缺少安全扩展",
+                "ADCS",
+                "ESC9 - No Security Extension",
                 "HIGH",
                 f"{len(esc9)} client auth template(s) have CT_FLAG_NO_SECURITY_EXTENSION set.",
                 details=esc9,
                 risk_score=15,
-                recommendation="从所有客户端认证模板中移除CT_FLAG_NO_SECURITY_EXTENSION标志。",
+                recommendation="Remove CT_FLAG_NO_SECURITY_EXTENSION from all client auth templates.",
                 references=[
                     "https://posts.specterops.io/adcs-esc9-and-esc10-9f3b8427a60f"
                 ],
@@ -1469,8 +1469,8 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if client_auth_tmpls:
         findings.append(
             F(
-                "证书服务",
-                "ESC10 - 证书映射强制（需手动验证）",
+                "ADCS",
+                "ESC10 - Certificate Mapping Enforcement (Manual)",
                 "MEDIUM",
                 f"{len(client_auth_tmpls)} client authentication template(s) exist. "
                 "If StrongCertificateBindingEnforcement = 0 on DCs, UPN spoofing is possible.",
@@ -1496,11 +1496,11 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
         if ca_configs and ad.attr_int(ca_configs[0], "flags") & 0x00000001:
             findings.append(
                 F(
-                    "证书服务",
-                    "ESC11 - CA接受非加密RPC请求",
+                    "ADCS",
+                    "ESC11 - CA Accepts Non-Encrypted RPC Requests",
                     "HIGH",
                     f"CA '{ca_name}' enables NTLM relay over RPC without requiring HTTPS.",
-                    recommendation="在CA的RPC接口上启用SSL/TLS。",
+                    recommendation="Enable SSL/TLS on the CA RPC interface.",
                     risk_score=15,
                 )
             )
@@ -1526,13 +1526,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc13:
         findings.append(
             F(
-                "证书服务",
-                "ESC13 - 颁发策略关联AD组",
+                "ADCS",
+                "ESC13 - Issuance Policy Linked to AD Group",
                 "HIGH",
                 f"{len(esc13)} template(s) grant group membership via certificate enrollment.",
                 details=esc13,
                 risk_score=15,
-                recommendation="审计所有颁发策略OID上的msDS-OIDToGroupLink配置。",
+                recommendation="Audit msDS-OIDToGroupLink on all issuance policy OIDs.",
                 references=["https://posts.specterops.io/adcs-esc13-9cfd3ec3d4f9"],
             )
         )
@@ -1554,13 +1554,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if esc15:
         findings.append(
             F(
-                "证书服务",
-                "ESC15 - 架构版本1模板允许申请者自定义SAN",
+                "ADCS",
+                "ESC15 - Schema Version 1 Template with Enrollee-Supplied SAN",
                 "CRITICAL",
                 f"{len(esc15)} schema v1 template(s) allow SAN supply and client auth.",
                 details=esc15,
                 risk_score=25,
-                recommendation="升级模板架构版本或禁用申请者自定义SAN。",
+                recommendation="Upgrade template schema version or disable enrollee-supplied SAN.",
                 references=[
                     "https://posts.specterops.io/adcs-esc15-discover-and-exploit"
                 ],
@@ -1576,13 +1576,13 @@ def check_adcs(ad: ADConnector) -> Tuple[List[F], Dict]:
     if weak_key:
         findings.append(
             F(
-                "证书服务",
-                "证书模板密钥长度不足",
+                "ADCS",
+                "Weak Key Size in Certificate Templates",
                 "MEDIUM",
                 f"{len(weak_key)} template(s) use key sizes below 2048-bit.",
                 details=weak_key,
                 risk_score=10,
-                recommendation="要求至少2048位RSA或256位ECC密钥。",
+                recommendation="Require minimum 2048-bit RSA or 256-bit ECC keys.",
             )
         )
     return findings, stats
@@ -1614,40 +1614,40 @@ def check_trusts(ad: ADConnector) -> Tuple[List[F], Dict]:
         if dirn == 3 and not sid_f:
             findings.append(
                 F(
-                    "域信任关系",
+                    "Domain Trusts",
                     f"Bidirectional Trust Without SID Filtering: {name}",
                     "HIGH",
-                    "双向信任上禁用了SID筛选，可能导致SID历史攻击。",
-                    recommendation="启用SID筛选：netdom trust /domain:<remote> /EnableSIDHistory:no",
+                    "SID filtering disabled on bidirectional trust enables SID history attacks.",
+                    recommendation="Enable SID filtering: netdom trust /domain:<remote> /EnableSIDHistory:no",
                     risk_score=15,
                 )
             )
         if forest and dirn in (2, 3):
             findings.append(
                 F(
-                    "域信任关系",
+                    "Domain Trusts",
                     f"Forest Trust to {name}",
                     "MEDIUM",
-                    "林信任会跨林边界扩大攻击面。",
-                    recommendation="审计林信任的必要性；启用选择性身份验证。",
+                    "Forest trusts extend attack surface across forest boundaries.",
+                    recommendation="Audit forest trust necessity; enable selective authentication.",
                     risk_score=5,
                 )
             )
         if ext:
             findings.append(
                 F(
-                    "域信任关系",
+                    "Domain Trusts",
                     f"External Trust to {name}",
                     "MEDIUM",
-                    "外部信任比林信任风险更高。",
-                    recommendation="替换为林信任，如非必要则移除。",
+                    "External trusts are higher risk than forest trusts.",
+                    recommendation="Replace with forest trusts or remove if unnecessary.",
                     risk_score=8,
                 )
             )
     if trust_list:
         findings.append(
             F(
-                "域信任关系",
+                "Domain Trusts",
                 f"{len(trust_list)} Trust(s) Configured",
                 "INFO",
                 "Trusts increase attack surface.",
@@ -1691,12 +1691,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
             )
         findings.append(
             F(
-                "账户卫生",
+                "Account Hygiene",
                 "Stale Enabled User Accounts (180+ days)",
                 sev,
                 f"{len(stale_users)} active users haven't logged in for 180+ days.",
                 details=details,
-                recommendation="90天后禁用账户；180天后删除。",
+                recommendation="Disable accounts after 90 days; delete after 180.",
                 risk_score=10,
             )
         )
@@ -1716,8 +1716,8 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
             )
         findings.append(
             F(
-                "账户卫生",
-                "长期未使用的启用计算机账户（90+天）",
+                "Account Hygiene",
+                "Stale Enabled Computer Accounts (90+ days)",
                 "MEDIUM",
                 f"{len(stale_comp)} computer accounts haven't authenticated for 90+ days.",
                 details=details,
@@ -1734,12 +1734,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(never) > 5:
         findings.append(
             F(
-                "账户卫生",
-                "已启用但从未登录的用户账户",
+                "Account Hygiene",
+                "Enabled Users That Have Never Logged In",
                 "MEDIUM",
                 f"{len(never)} accounts are enabled but have never been used.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in never],
-                recommendation="审查并禁用从未使用的账户。",
+                recommendation="Review and disable accounts that have never been used.",
                 risk_score=5,
             )
         )
@@ -1752,12 +1752,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     if no_pwd:
         findings.append(
             F(
-                "账户卫生",
-                "账户设置了'无需密码'标志",
+                "Account Hygiene",
+                "Accounts with 'Password Not Required' Flag",
                 "HIGH",
                 f"{len(no_pwd)} account(s) can authenticate without a password.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in no_pwd],
-                recommendation="从所有账户移除PASSWD_NOTREQD标志。",
+                recommendation="Remove PASSWD_NOTREQD flag from all accounts.",
                 risk_score=15,
             )
         )
@@ -1769,12 +1769,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     if rev_enc:
         findings.append(
             F(
-                "账户卫生",
-                "账户启用了可逆加密",
+                "Account Hygiene",
+                "Accounts with Reversible Encryption Enabled",
                 "CRITICAL",
                 f"{len(rev_enc)} account(s) store passwords with reversible encryption.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in rev_enc],
-                recommendation="禁用可逆加密并重置受影响的密码。",
+                recommendation="Disable reversible encryption and reset affected passwords.",
                 risk_score=25,
             )
         )
@@ -1793,12 +1793,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
             details.append(f"{ad.attr_str(u,'sAMAccountName')} (password age: {age}d)")
         findings.append(
             F(
-                "账户卫生",
-                "大量账户密码使用超过2年",
+                "Account Hygiene",
+                "Many Accounts with Passwords Older Than 2 Years",
                 "MEDIUM",
                 f"{len(old_pwd)} enabled accounts have not changed passwords in 2+ years.",
                 details=details,
-                recommendation="强制定期更换密码。",
+                recommendation="Enforce periodic password change.",
                 risk_score=5,
             )
         )
@@ -1810,11 +1810,11 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(adm_count) > 20:
         findings.append(
             F(
-                "账户卫生",
-                "adminCount=1的账户数量过多",
+                "Account Hygiene",
+                "Excessive adminCount=1 Accounts",
                 "MEDIUM",
                 f"{len(adm_count)} users have adminCount=1.",
-                recommendation="清除非特权账户的adminCount标志。",
+                recommendation="Clear adminCount flag for non-privileged accounts.",
                 risk_score=5,
             )
         )
@@ -1829,12 +1829,12 @@ def check_account_hygiene(ad: ADConnector) -> Tuple[List[F], Dict]:
     if dupes:
         findings.append(
             F(
-                "账户卫生",
-                "存在重复的服务主体名称(SPN)",
+                "Account Hygiene",
+                "Duplicate Service Principal Names (SPNs)",
                 "HIGH",
                 f"{len(dupes)} SPN(s) registered on multiple objects.",
                 details=[f"{s}: {', '.join(v)}" for s, v in list(dupes.items())[:20]],
-                recommendation="移除重复SPN：setspn -D <spn> <account>",
+                recommendation="Remove duplicate SPNs: setspn -D <spn> <account>",
                 risk_score=10,
             )
         )
@@ -1850,22 +1850,22 @@ def check_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     if ad.conn.server.ssl:
         findings.append(
             F(
-                "协议安全",
-                "LDAP签名/通道绑定状态",
+                "Protocol Security",
+                "LDAP Signing / Channel Binding",
                 "INFO",
-                "已通过LDAPS（636端口）建立连接。",
-                recommendation="通过注册表或GPO在所有域控制器上设置LdapEnforceChannelBinding = 2。",
+                "Connection established over LDAPS (port 636).",
+                recommendation="Set LdapEnforceChannelBinding = 2 via registry or GPO on all DCs.",
                 risk_score=0,
             )
         )
     else:
         findings.append(
             F(
-                "协议安全",
-                "LDAP签名/通道绑定（需手动验证）",
+                "Protocol Security",
+                "LDAP Signing / Channel Binding (Manual Verification)",
                 "MEDIUM",
-                "无法通过LDAP读取ldapServerIntegrity属性。",
-                recommendation="通过GPO验证：'域控制器：LDAP服务器签名要求' = 要求签名。",
+                "Cannot read ldapServerIntegrity via LDAP.",
+                recommendation="Verify via GPO: 'Domain controller: LDAP server signing requirements' = Require signing.",
                 risk_score=8,
             )
         )
@@ -1885,12 +1885,12 @@ def check_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     if old_os_dcs:
         findings.append(
             F(
-                "协议安全",
-                "域控制器运行已终止支持的操作系统",
+                "Protocol Security",
+                "Domain Controllers Running End-of-Life OS",
                 "CRITICAL",
                 f"{len(old_os_dcs)} DC(s) running outdated OS.",
                 details=old_os_dcs,
-                recommendation="将域控制器升级至Windows Server 2019/2022。",
+                recommendation="Upgrade DCs to Windows Server 2019/2022.",
                 risk_score=20,
             )
         )
@@ -1913,11 +1913,11 @@ def check_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
             sev = "CRITICAL" if dfl < 3 else ("HIGH" if dfl < 5 else "MEDIUM")
             findings.append(
                 F(
-                    "协议安全",
+                    "Protocol Security",
                     f"Domain Functional Level: {fl_str}",
                     sev,
                     f"DFL is {fl_str}. Lower levels lack security features.",
-                    recommendation="将域/林功能级别提升至2016。",
+                    recommendation="Raise domain/forest functional level to 2016.",
                     risk_score=15 if dfl < 5 else 8,
                 )
             )
@@ -1932,11 +1932,11 @@ def check_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
         )
     findings.append(
         F(
-            "协议安全",
-            "NTLMv1 / WDigest（需手动验证）",
+            "Protocol Security",
+            "NTLMv1 / WDigest (Manual Verification Required)",
             "INFO",
-            "NTLMv1和WDigest设置仅存在于注册表中。",
-            recommendation="通过GPO设置LmCompatibilityLevel = 5和UseLogonCredential = 0。",
+            "NTLMv1 and WDigest settings are registry-only.",
+            recommendation="Set LmCompatibilityLevel = 5 and UseLogonCredential = 0 via GPO.",
             risk_score=0,
         )
     )
@@ -1994,11 +1994,11 @@ def check_gpo(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(gpos) > 100:
         findings.append(
             F(
-                "组策略对象",
-                "组策略对象数量过多",
+                "Group Policy",
+                "Excessive Number of GPOs",
                 "LOW",
                 f"{len(gpos)} GPOs detected.",
-                recommendation="合并重叠的组策略对象。",
+                recommendation="Consolidate overlapping GPOs.",
                 risk_score=3,
             )
         )
@@ -2031,7 +2031,7 @@ def check_gpo(ad: ADConnector) -> Tuple[List[F], Dict]:
         if cond:
             findings.append(
                 F(
-                    "组策略对象",
+                    "Group Policy",
                     label,
                     (
                         "INFO"
@@ -2066,11 +2066,11 @@ def check_laps(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not has_laps and not has_laps_v2:
         findings.append(
             F(
-                "LAPS本地管理员密码",
-                "未安装LAPS",
+                "LAPS",
+                "LAPS Not Installed",
                 "HIGH",
-                "未部署本地管理员密码解决方案(LAPS)。",
-                recommendation="部署Windows LAPS（Server 2019/Win11内置）或传统LAPS。",
+                "Local Administrator Password Solution is not deployed.",
+                recommendation="Deploy Windows LAPS (built-in to Server 2019/Win11) or legacy LAPS.",
                 risk_score=15,
             )
         )
@@ -2078,7 +2078,7 @@ def check_laps(ad: ADConnector) -> Tuple[List[F], Dict]:
     version = "Windows LAPS (v2)" if has_laps_v2 else "Legacy LAPS"
     findings.append(
         F(
-            "LAPS本地管理员密码",
+            "LAPS",
             f"{version} Schema Detected",
             "INFO",
             f"{version} schema attributes are present.",
@@ -2094,12 +2094,12 @@ def check_laps(ad: ADConnector) -> Tuple[List[F], Dict]:
         if no_laps:
             findings.append(
                 F(
-                    "LAPS本地管理员密码",
-                    "计算机未配置LAPS密码",
+                    "LAPS",
+                    "Computers Without LAPS Password",
                     "MEDIUM",
                     f"{len(no_laps)} enabled computer(s) have no LAPS password set.",
                     details=[ad.attr_str(u, "sAMAccountName") for u in no_laps[:30]],
-                    recommendation="确保LAPS已应用于所有工作站/服务器。",
+                    recommendation="Ensure LAPS is applied to all workstations/servers.",
                     risk_score=10,
                 )
             )
@@ -2112,12 +2112,12 @@ def check_laps(ad: ADConnector) -> Tuple[List[F], Dict]:
         if no_lapsv2:
             findings.append(
                 F(
-                    "LAPS本地管理员密码",
-                    "计算机未配置Windows LAPS密码",
+                    "LAPS",
+                    "Computers Without Windows LAPS Password",
                     "MEDIUM",
                     f"{len(no_lapsv2)} computer(s) lack Windows LAPS password attributes.",
                     details=[ad.attr_str(u, "sAMAccountName") for u in no_lapsv2[:30]],
-                    recommendation="向所有计算机部署Windows LAPS策略。",
+                    recommendation="Deploy Windows LAPS policy to all machines.",
                     risk_score=10,
                 )
             )
@@ -2171,20 +2171,20 @@ def check_laps_coverage(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "HIGH" if pct > 20 else "MEDIUM"
         findings.append(
             F(
-                "LAPS本地管理员密码",
+                "LAPS",
                 "Computers Without a LAPS Password Set",
                 sev,
                 f"{len(no_laps)} of {total} enabled non-DC computer(s) ({pct}%) have no LAPS password.",
                 details=no_laps[:50],
-                recommendation="向所有工作站和服务器应用LAPS组策略。",
+                recommendation="Apply a LAPS GPO to all workstations and servers.",
                 risk_score=12 if sev == "HIGH" else 7,
             )
         )
     else:
         findings.append(
             F(
-                "LAPS本地管理员密码",
-                "所有非域控制器计算机均已配置LAPS密码",
+                "LAPS",
+                "LAPS Password Present on All Non-DC Computers",
                 "INFO",
                 f"All {total} enabled non-DC computer(s) have a LAPS password set.",
                 risk_score=0,
@@ -2209,11 +2209,11 @@ def check_dns(ad: ADConnector) -> Tuple[List[F], Dict]:
         if "*" in ad.attr_str(r, "name"):
             findings.append(
                 F(
-                    "域名系统",
-                    "检测到通配符DNS记录",
+                    "DNS",
+                    "Wildcard DNS Record Detected",
                     "HIGH",
-                    "发现通配符DNS条目。",
-                    recommendation="移除非必要的通配符DNS记录。",
+                    "Wildcard DNS entry found.",
+                    recommendation="Remove wildcard DNS records unless specifically required.",
                     risk_score=10,
                 )
             )
@@ -2225,11 +2225,11 @@ def check_dns(ad: ADConnector) -> Tuple[List[F], Dict]:
     stats["dns_record_count"] = len(dns_servers)
     findings.append(
         F(
-            "域名系统",
-            "LLMNR / NetBIOS-NS投毒风险（需手动检查）",
+            "DNS",
+            "LLMNR / NetBIOS-NS Poisoning (Manual Check Required)",
             "INFO",
-            "LLMNR和NetBIOS-NS可能导致Responder式凭证窃取。",
-            recommendation="通过GPO禁用LLMNR，并在所有适配器上禁用NetBIOS over TCP/IP。",
+            "LLMNR and NetBIOS-NS enable Responder-style credential capture.",
+            recommendation="Disable LLMNR via GPO and NetBIOS over TCP/IP on all adapters.",
             risk_score=0,
         )
     )
@@ -2256,11 +2256,11 @@ def check_domain_controllers(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(dcs) == 1:
         findings.append(
             F(
-                "域控制器",
-                "检测到单域控制器环境",
+                "Domain Controllers",
+                "Single Domain Controller Detected",
                 "HIGH",
-                "仅有一台域控制器 —— 存在单点故障风险。",
-                recommendation="部署至少两台域控制器以实现冗余。",
+                "Only one DC -- single point of failure.",
+                recommendation="Deploy at least two DCs for redundancy.",
                 risk_score=10,
             )
         )
@@ -2273,12 +2273,12 @@ def check_domain_controllers(ad: ADConnector) -> Tuple[List[F], Dict]:
     if old_os:
         findings.append(
             F(
-                "域控制器",
-                "域控制器运行过时操作系统",
+                "Domain Controllers",
+                "Legacy OS on Domain Controllers",
                 "CRITICAL",
                 f"{len(old_os)} DC(s) running end-of-life Windows Server.",
                 details=old_os,
-                recommendation="立即升级至Server 2019/2022。",
+                recommendation="Upgrade to Server 2019/2022 immediately.",
                 risk_score=25,
             )
         )
@@ -2294,11 +2294,11 @@ def check_domain_controllers(ad: ADConnector) -> Tuple[List[F], Dict]:
         if any("Domain Users" in x or "Authenticated Users" in x for x in reveal):
             findings.append(
                 F(
-                    "域控制器",
+                    "Domain Controllers",
                     f"RODC {rname} Has Broad Password Replication",
                     "HIGH",
-                    "只读域控制器(RODC)缓存了所有域用户的密码。",
-                    recommendation="将msDS-RevealOnDemandGroup限制为仅登录该RODC的用户。",
+                    "RODC caches passwords for all domain users.",
+                    recommendation="Restrict msDS-RevealOnDemandGroup to only users who log into that RODC.",
                     risk_score=12,
                 )
             )
@@ -2363,12 +2363,12 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "证书服务",
-                "ESC4 - 证书模板ACL存在可写权限",
+                "ADCS",
+                "ESC4 - Writable Certificate Template ACLs",
                 "CRITICAL",
                 f"{sum(len(v) for v in esc4_by_trustee.values())} template/trustee combination(s).",
                 details=details,
-                recommendation="从非特权账户移除GenericAll、WriteDACL、WriteOwner、GenericWrite权限。",
+                recommendation="Remove GenericAll, WriteDACL, WriteOwner, GenericWrite from non-privileged accounts.",
                 risk_score=25,
                 references=[
                     "https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf"
@@ -2378,8 +2378,8 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "证书服务",
-                "ESC4 - 证书模板ACL信息",
+                "ADCS",
+                "ESC4 - Certificate Template ACLs",
                 "INFO",
                 "No misconfigured template ACLs detected.",
                 risk_score=0,
@@ -2418,12 +2418,12 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "证书服务",
-                "ESC5 - PKI对象ACL存在可写权限",
+                "ADCS",
+                "ESC5 - Writable PKI Object ACLs",
                 "CRITICAL",
                 f"{len(esc5_by_trustee)} non-privileged principal(s) have write access to PKI container objects.",
                 details=details,
-                recommendation="从所有PKI容器对象上移除非管理员账户的写入权限。",
+                recommendation="Remove write permissions from non-admin accounts on all PKI container objects.",
                 risk_score=25,
                 references=[
                     "https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf"
@@ -2433,8 +2433,8 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "证书服务",
-                "ESC5 - PKI对象ACL信息",
+                "ADCS",
+                "ESC5 - PKI Object ACLs",
                 "INFO",
                 "No non-privileged write access on PKI container objects.",
                 risk_score=0,
@@ -2470,12 +2470,12 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "证书服务",
-                "ESC7 - 低权限用户拥有CA官员/管理员权限",
+                "ADCS",
+                "ESC7 - CA Officer/Manager Rights for Low-Privileged Users",
                 "CRITICAL",
                 f"{len(esc7_by_trustee)} non-privileged principal(s) have CA Officer or Manager rights.",
                 details=details,
-                recommendation="从非管理员账户移除ManageCertificates/ManageCA权限。",
+                recommendation="Remove ManageCertificates/ManageCA rights from non-admin accounts.",
                 risk_score=20,
                 references=[
                     "https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf"
@@ -2485,8 +2485,8 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "证书服务",
-                "ESC7 - CA官员/管理员ACL信息",
+                "ADCS",
+                "ESC7 - CA Officer/Manager ACL",
                 "INFO",
                 "No low-privileged CA Officer/Manager rights detected.",
                 risk_score=0,
@@ -2521,12 +2521,12 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "DCSync权限",
-                "非特权账户拥有DCSync权限",
+                "DCSync",
+                "Non-Privileged Accounts with DCSync Rights",
                 "CRITICAL",
                 f"{len(dcsync_by_trustee)} non-privileged principal(s) have replication rights.",
                 details=details,
-                recommendation="立即从非域控制器/非域管理员账户移除DS-Replication-Get-Changes-All权限。",
+                recommendation="Remove DS-Replication-Get-Changes-All from non-DC/non-DA accounts immediately.",
                 risk_score=25,
                 references=["https://attack.mitre.org/techniques/T1003/006/"],
             )
@@ -2534,8 +2534,8 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "DCSync权限",
-                "DCSync权限信息",
+                "DCSync",
+                "DCSync Rights",
                 "INFO",
                 "No unexpected DCSync rights detected.",
                 risk_score=0,
@@ -2550,11 +2550,11 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(pu) == 0:
         findings.append(
             F(
-                "访问控制列表",
-                "受保护用户组中无成员",
+                "ACL",
+                "No Users in Protected Users Group",
                 "MEDIUM",
-                "受保护用户组提供额外的Kerberos保护。",
-                recommendation="将所有特权账户添加到受保护用户组。",
+                "The Protected Users group provides extra Kerberos protections.",
+                recommendation="Add all privileged accounts to the Protected Users group.",
                 risk_score=8,
             )
         )
@@ -2573,12 +2573,12 @@ def check_acls(ad: ADConnector) -> Tuple[List[F], Dict]:
         if risky:
             findings.append(
                 F(
-                    "访问控制列表",
-                    "用户账户配置了约束委派",
+                    "ACL",
+                    "User Accounts with Constrained Delegation Configured",
                     "MEDIUM",
                     f"{len(risky)} non-computer account(s) have delegation targets.",
                     details=risky[:20],
-                    recommendation="验证委派目标均为有意配置且保持最小权限。",
+                    recommendation="Verify delegation targets are intentional and minimal.",
                     risk_score=8,
                 )
             )
@@ -2602,11 +2602,11 @@ def check_optional_features(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not has_recycle:
         findings.append(
             F(
-                "可选功能",
-                "AD回收站未启用",
+                "Optional Features",
+                "AD Recycle Bin Not Enabled",
                 "LOW",
-                "已删除的AD对象无法轻松恢复。",
-                recommendation="启用AD可选功能'回收站功能' -Scope ForestOrConfigurationSet",
+                "Deleted AD objects cannot be easily recovered.",
+                recommendation="Enable-ADOptionalFeature 'Recycle Bin Feature' -Scope ForestOrConfigurationSet",
                 risk_score=3,
             )
         )
@@ -2617,11 +2617,11 @@ def check_optional_features(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not has_pam:
         findings.append(
             F(
-                "可选功能",
-                "特权访问管理(PAM)未启用",
+                "Optional Features",
+                "Privileged Access Management (PAM) Not Enabled",
                 "INFO",
-                "特权访问管理(PAM)支持基于时间的即时特权访问。",
-                recommendation="考虑启用PAM以增强特权访问管理。",
+                "PAM enables time-based, just-in-time privileged access.",
+                recommendation="Consider enabling PAM for enhanced privileged access management.",
                 risk_score=0,
             )
         )
@@ -2639,7 +2639,7 @@ def check_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(sites) > 1:
         findings.append(
             F(
-                "复制权限",
+                "Replication",
                 f"{len(sites)} AD Sites Detected",
                 "INFO",
                 "Multi-site topology -- verify site links and replication schedules.",
@@ -2657,11 +2657,11 @@ def check_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
         if interval > 180:
             findings.append(
                 F(
-                    "复制权限",
-                    "站点链接复制间隔过长",
+                    "Replication",
+                    "Site Link Replication Interval Too High",
                     "MEDIUM",
                     f"Site link '{ad.attr_str(sl,'cn')}' has interval of {interval} minutes.",
-                    recommendation="将复制间隔设置为 <= 60分钟。",
+                    recommendation="Set replication interval to <= 60 minutes.",
                     risk_score=3,
                 )
             )
@@ -2674,11 +2674,11 @@ def check_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(ntds_objects) == 0:
         findings.append(
             F(
-                "复制权限",
-                "未找到nTDSDSA对象",
+                "Replication",
+                "No nTDSDSA Objects Found",
                 "HIGH",
-                "未找到任何域控制器复制服务对象。",
-                recommendation="运行：repadmin /showrepl 和 dcdiag /test:replications",
+                "Could not find any DC replication service objects.",
+                recommendation="Run: repadmin /showrepl and dcdiag /test:replications",
                 risk_score=10,
             )
         )
@@ -2706,24 +2706,24 @@ def check_service_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(svc) > 0 and len(gmsa) == 0:
         findings.append(
             F(
-                "服务账户",
-                "未使用组托管服务账户(gMSA)，普通账户配置了SPN",
+                "Service Accounts",
+                "No gMSA In Use -- Regular Accounts Have SPNs",
                 "HIGH",
                 f"{len(svc)} regular user account(s) used as service accounts, but no gMSA deployed.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in svc],
-                recommendation="将服务账户迁移至组托管服务账户(gMSA)。",
+                recommendation="Migrate service accounts to Group Managed Service Accounts (gMSA).",
                 risk_score=10,
             )
         )
     elif len(svc) > 0:
         findings.append(
             F(
-                "服务账户",
+                "Service Accounts",
                 f"{len(svc)} Regular User Service Accounts (Non-gMSA)",
                 "MEDIUM",
                 f"{len(svc)} accounts with SPNs are not gMSA.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in svc],
-                recommendation="尽可能迁移至gMSA。",
+                recommendation="Migrate to gMSA where possible.",
                 risk_score=5,
             )
         )
@@ -2735,12 +2735,12 @@ def check_service_accounts(ad: ADConnector) -> Tuple[List[F], Dict]:
     if svc_admin:
         findings.append(
             F(
-                "服务账户",
-                "服务账户拥有adminCount=1属性",
+                "Service Accounts",
+                "Service Accounts with adminCount=1",
                 "HIGH",
                 f"{len(svc_admin)} service account(s) have adminCount=1.",
                 details=svc_admin,
-                recommendation="从特权组中移除服务账户。",
+                recommendation="Remove service accounts from privileged groups.",
                 risk_score=12,
             )
         )
@@ -2760,11 +2760,11 @@ def check_misc(ad: ADConnector) -> Tuple[List[F], Dict]:
         if maq > 0:
             findings.append(
                 F(
-                    "安全加固",
-                    "计算机账户配额大于0",
+                    "Hardening",
+                    "Machine Account Quota > 0",
                     "MEDIUM",
                     f"ms-DS-MachineAccountQuota = {maq}. Any domain user can add up to {maq} computers.",
-                    recommendation="将ms-DS-MachineAccountQuota设置为0。",
+                    recommendation="Set ms-DS-MachineAccountQuota to 0.",
                     risk_score=10,
                 )
             )
@@ -2779,11 +2779,11 @@ def check_misc(ad: ADConnector) -> Tuple[List[F], Dict]:
         if tsl < 180:
             findings.append(
                 F(
-                    "安全加固",
-                    "墓碑生存时间过短",
+                    "Hardening",
+                    "Short Tombstone Lifetime",
                     "LOW",
                     f"Tombstone lifetime is {tsl} days.",
-                    recommendation="将墓碑生存时间设置为180天。",
+                    recommendation="Set tombstone lifetime to 180 days.",
                     risk_score=2,
                 )
             )
@@ -2794,12 +2794,12 @@ def check_misc(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(schema_admins) > 1:
         findings.append(
             F(
-                "安全加固",
-                "架构管理员组存在成员",
+                "Hardening",
+                "Schema Admins Group Has Members",
                 "HIGH",
                 f"{len(schema_admins)} member(s) in Schema Admins.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in schema_admins],
-                recommendation="架构更新后立即从架构管理员组移除所有成员。",
+                recommendation="Remove all members from Schema Admins immediately after schema updates.",
                 risk_score=15,
             )
         )
@@ -2810,12 +2810,12 @@ def check_misc(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(ent_admins) > 1:
         findings.append(
             F(
-                "安全加固",
-                "企业管理员组存在成员",
+                "Hardening",
+                "Enterprise Admins Group Has Members",
                 "HIGH",
                 f"{len(ent_admins)} member(s) in Enterprise Admins.",
                 details=[ad.attr_str(u, "sAMAccountName") for u in ent_admins],
-                recommendation="从企业管理员组移除非必要账户。",
+                recommendation="Remove non-essential accounts from Enterprise Admins.",
                 risk_score=12,
             )
         )
@@ -2825,21 +2825,21 @@ def check_misc(ad: ADConnector) -> Tuple[List[F], Dict]:
     if guest and not (ad.attr_int(guest[0], "userAccountControl") & UAC_DISABLED):
         findings.append(
             F(
-                "安全加固",
-                "来宾账户处于启用状态",
+                "Hardening",
+                "Guest Account Enabled",
                 "MEDIUM",
-                "内置来宾账户处于启用状态。",
-                recommendation="禁用来宾账户。",
+                "The built-in Guest account is enabled.",
+                recommendation="Disable the Guest account.",
                 risk_score=8,
             )
         )
     findings.append(
         F(
-            "安全加固",
-            "高级审核策略（需GPO手动验证）",
+            "Hardening",
+            "Advanced Audit Policy (Manual GPO Verification)",
             "INFO",
-            "确保高级审核策略涵盖：登录/注销、账户管理、目录服务访问。",
-            recommendation="通过GPO配置：计算机配置 > 安全设置 > 高级审核。",
+            "Ensure Advanced Audit Policy covers: Logon/Logoff, Account Management, Directory Service Access.",
+            recommendation="Configure via GPO: Computer Config > Security Settings > Advanced Audit.",
             risk_score=0,
         )
     )
@@ -2877,20 +2877,20 @@ def check_deprecated_os(ad: ADConnector) -> Tuple[List[F], Dict]:
     if deprecated:
         findings.append(
             F(
-                "过时操作系统",
-                "计算机账户运行已淘汰操作系统",
+                "Deprecated OS",
+                "Computer Accounts Running Deprecated Operating Systems",
                 "CRITICAL",
                 f"{len(deprecated)} enabled computer account(s) report a deprecated OS.",
                 details=deprecated,
-                recommendation="立即停用或隔离已淘汰系统。",
+                recommendation="Decommission or isolate deprecated systems immediately.",
                 risk_score=20,
             )
         )
     else:
         findings.append(
             F(
-                "过时操作系统",
-                "未检测到已淘汰操作系统",
+                "Deprecated OS",
+                "No Deprecated Operating Systems Detected",
                 "INFO",
                 "All enabled computer accounts report a currently-supported OS.",
                 risk_score=0,
@@ -2924,12 +2924,12 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     if legacy_os:
         findings.append(
             F(
-                "遗留协议",
-                "检测到活动的遗留Windows系统",
+                "Legacy Protocols",
+                "Active Legacy Windows Systems Detected",
                 "CRITICAL",
                 f"{len(legacy_os)} computer(s) running end-of-life OS are actively authenticating.",
                 details=legacy_os[:30],
-                recommendation="停用或隔离遗留系统。",
+                recommendation="Decommission or isolate legacy systems.",
                 risk_score=20,
             )
         )
@@ -2939,12 +2939,12 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "CRITICAL" if any(ad.dc_ip in h for h in smb1_hosts) else "HIGH"
         findings.append(
             F(
-                "遗留协议",
+                "Legacy Protocols",
                 "SMBv1 Enabled on Active Hosts",
                 sev,
                 f"{len(smb1_hosts)} host(s) responded positively to an SMBv1 negotiate request.",
                 details=smb1_hosts,
-                recommendation="禁用SMBv1：Set-SmbServerConfiguration -EnableSMB1Protocol $false",
+                recommendation="Disable SMBv1: Set-SmbServerConfiguration -EnableSMB1Protocol $false",
                 risk_score=20 if sev == "CRITICAL" else 15,
                 references=["https://aka.ms/stopusingsmb1"],
             )
@@ -2952,8 +2952,8 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "遗留协议",
-                "探测主机未检测到SMBv1",
+                "Legacy Protocols",
+                "SMBv1 Not Detected on Probed Hosts",
                 "INFO",
                 "No hosts responded to SMBv1 negotiate requests.",
                 risk_score=0,
@@ -2963,12 +2963,12 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "CRITICAL" if any(ad.dc_ip in h for h in signing_issues) else "HIGH"
         findings.append(
             F(
-                "遗留协议",
+                "Legacy Protocols",
                 "SMB Signing Not Required or Disabled",
                 sev,
                 f"{len(signing_issues)} host(s) have SMB signing disabled or not required.",
                 details=signing_issues,
-                recommendation="通过GPO强制SMB签名：'Microsoft网络服务器：对通信进行数字签名（始终）'",
+                recommendation="Enforce SMB signing via GPO: 'Microsoft network server: Digitally sign communications (always)'",
                 risk_score=20 if sev == "CRITICAL" else 15,
                 references=["https://attack.mitre.org/techniques/T1557/001/"],
             )
@@ -2976,8 +2976,8 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "遗留协议",
-                "所有探测主机均要求SMB签名",
+                "Legacy Protocols",
+                "SMB Signing Required on All Probed Hosts",
                 "INFO",
                 "All reachable hosts require SMB signing.",
                 risk_score=0,
@@ -2987,12 +2987,12 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "CRITICAL" if any(ad.dc_ip in h for h in null_sessions) else "HIGH"
         findings.append(
             F(
-                "遗留协议",
+                "Legacy Protocols",
                 "Null Sessions Accepted",
                 sev,
                 f"{len(null_sessions)} host(s) accept unauthenticated SMB null sessions.",
                 details=null_sessions,
-                recommendation="通过GPO设置RestrictNullSessAccess = 1。",
+                recommendation="Set RestrictNullSessAccess = 1 via GPO.",
                 risk_score=20 if sev == "CRITICAL" else 15,
                 references=["https://attack.mitre.org/techniques/T1135/"],
             )
@@ -3000,8 +3000,8 @@ def check_legacy_protocols(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "遗留协议",
-                "探测主机不接受空会话",
+                "Legacy Protocols",
+                "Null Sessions Not Accepted on Probed Hosts",
                 "INFO",
                 "No hosts accepted unauthenticated null session requests.",
                 risk_score=0,
@@ -3026,8 +3026,8 @@ def check_exchange(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not exch:
         findings.append(
             F(
-                "Exchange服务",
-                "未检测到Exchange服务",
+                "Exchange",
+                "Exchange Not Detected",
                 "INFO",
                 "No Exchange organization container found.",
                 risk_score=0,
@@ -3043,12 +3043,12 @@ def check_exchange(ad: ADConnector) -> Tuple[List[F], Dict]:
         if members:
             findings.append(
                 F(
-                    "Exchange服务",
-                    "Exchange Windows权限组存在成员",
+                    "Exchange",
+                    "Exchange Windows Permissions Group Has Members",
                     "HIGH",
                     f"{len(members)} member(s) in 'Exchange Windows Permissions'. "
                     "This group has WriteDACL on the domain object (PrivExchange / CVE-2019-0686).",
-                    recommendation="应用Exchange拆分权限模型。",
+                    recommendation="Apply Exchange Split Permissions model.",
                     risk_score=15,
                     references=[
                         "https://dirkjanm.io/abusing-exchange-one-api-call-away-from-domain-admin/"
@@ -3061,11 +3061,11 @@ def check_exchange(ad: ADConnector) -> Tuple[List[F], Dict]:
         if members:
             findings.append(
                 F(
-                    "Exchange服务",
-                    "Exchange受信任子系统组存在成员",
+                    "Exchange",
+                    "Exchange Trusted Subsystem Has Members",
                     "MEDIUM",
                     f"Exchange Trusted Subsystem has {len(members)} member(s).",
-                    recommendation="确保仅Exchange服务器计算机账户为成员。",
+                    recommendation="Ensure only Exchange server computer accounts are members.",
                     risk_score=8,
                 )
             )
@@ -3114,7 +3114,7 @@ def check_admin_count(ad: ADConnector) -> Tuple[List[F], Dict]:
     stats["admincount1_orphaned"] = len(orphan_admins)
     findings.append(
         F(
-            "特权账户",
+            "Privileged Accounts",
             f"adminCount=1 Account Inventory ({len(admin_count_users)} total)",
             "INFO",
             f"{len(admin_count_users)} user account(s) carry the adminCount=1 flag. "
@@ -3126,48 +3126,48 @@ def check_admin_count(ad: ADConnector) -> Tuple[List[F], Dict]:
     if len(admin_count_users) > 20:
         findings.append(
             F(
-                "特权账户",
-                "adminCount=1的账户数量过多",
+                "Privileged Accounts",
+                "Excessive adminCount=1 Accounts",
                 "MEDIUM",
                 f"{len(admin_count_users)} user account(s) have adminCount=1.",
-                recommendation="审计adminCount=1的账户。清除不再属于特权组的账户的该标志。",
+                recommendation="Audit adminCount=1 accounts. Clear flag on accounts no longer in privileged groups.",
                 risk_score=5,
             )
         )
     if disabled_admins:
         findings.append(
             F(
-                "特权账户",
-                "已禁用账户仍保留adminCount=1（幽灵管理员）",
+                "Privileged Accounts",
+                "Disabled Accounts Retaining adminCount=1 (Ghost Admins)",
                 "MEDIUM",
                 f"{len(disabled_admins)} disabled account(s) still carry adminCount=1.",
                 details=disabled_admins[:30],
-                recommendation="从所有特权组中移除并清除adminCount，然后删除。",
+                recommendation="Remove from all privileged groups and clear adminCount, then delete.",
                 risk_score=8,
             )
         )
     if orphan_admins:
         findings.append(
             F(
-                "特权账户",
-                "拥有adminCount=1但无特权组成员身份的账户",
+                "Privileged Accounts",
+                "Accounts with adminCount=1 but No Privileged Group Membership",
                 "HIGH",
                 f"{len(orphan_admins)} enabled account(s) have adminCount=1 but are not currently "
                 "members of any known privileged group. Possible SDProp artefacts or backdoor accounts.",
                 details=orphan_admins[:30],
-                recommendation="调查每个账户。清除adminCount并审计是否存在后门ACE。",
+                recommendation="Investigate each account. Clear adminCount and audit for backdoor ACEs.",
                 risk_score=15,
             )
         )
     if stale_admins:
         findings.append(
             F(
-                "特权账户",
-                "长期未活动的adminCount=1账户（180+天）",
+                "Privileged Accounts",
+                "Stale Accounts with adminCount=1 (Inactive 180+ Days)",
                 "HIGH",
                 f"{len(stale_admins)} admin account(s) have not logged in for 180+ days.",
                 details=stale_admins[:30],
-                recommendation="特权账户30-90天未活动后禁用。",
+                recommendation="Disable inactive privileged accounts after 30-90 days of inactivity.",
                 risk_score=12,
             )
         )
@@ -3228,20 +3228,20 @@ def check_passwords_in_descriptions(ad: ADConnector) -> Tuple[List[F], Dict]:
     if admin_hits:
         findings.append(
             F(
-                "账户卫生",
-                "特权账户描述中可能包含密码",
+                "Account Hygiene",
+                "Privileged Accounts with Possible Password in Description",
                 "CRITICAL",
                 f"{len(admin_hits)} admin account(s) may have credentials in their Description field.",
                 details=admin_hits[:30],
-                recommendation="立即清空描述字段并轮换所有暴露的凭证。",
+                recommendation="Immediately clear the Description field and rotate any exposed credentials.",
                 risk_score=25,
             )
         )
     else:
         findings.append(
             F(
-                "账户卫生",
-                "管理员账户描述中未发现密码",
+                "Account Hygiene",
+                "No Passwords Found in Admin Account Descriptions",
                 "INFO",
                 "No privileged accounts have password-related keywords in their Description.",
                 risk_score=0,
@@ -3250,24 +3250,24 @@ def check_passwords_in_descriptions(ad: ADConnector) -> Tuple[List[F], Dict]:
     if user_hits:
         findings.append(
             F(
-                "账户卫生",
-                "用户账户描述中可能包含密码",
+                "Account Hygiene",
+                "User Accounts with Possible Password in Description",
                 "HIGH",
                 f"{len(user_hits)} enabled user account(s) may have credentials in their Description.",
                 details=user_hits[:30],
-                recommendation="清空描述字段，将凭证存储在特权访问管理(PAM)保管库中。",
+                recommendation="Clear the Description field and store credentials in a PAM vault.",
                 risk_score=15,
             )
         )
     if computer_hits:
         findings.append(
             F(
-                "账户卫生",
-                "计算机账户描述中可能包含密码",
+                "Account Hygiene",
+                "Computer Accounts with Possible Password in Description",
                 "MEDIUM",
                 f"{len(computer_hits)} computer account(s) may have credentials in their Description.",
                 details=computer_hits[:20],
-                recommendation="清空受影响计算机账户的描述字段。",
+                recommendation="Clear the Description field on affected computer accounts.",
                 risk_score=8,
             )
         )
@@ -3408,13 +3408,13 @@ def check_gpp_passwords(ad: ADConnector) -> Tuple[List[F], Dict]:
         stats["gpp_sysvol_accessible"] = False
         findings.append(
             F(
-                "组策略密码",
-                "SYSVOL不可访问——跳过GPP扫描",
+                "GPP Passwords",
+                "SYSVOL Not Accessible -- GPP Scan Skipped",
                 "INFO",
                 f"Could not walk \\\\{ad.dc_ip}\\SYSVOL. "
                 "Run from a domain-joined Windows host, or mount SYSVOL via Samba and re-run. "
                 "Manual check: findstr /S /I cpassword \\\\{domain}\\sysvol\\**\\*.xml",
-                recommendation="手动搜索SYSVOL中GPP XML文件里的cpassword属性。",
+                recommendation="Search SYSVOL manually for cpassword attributes in GPP XML files.",
                 risk_score=0,
                 references=["https://attack.mitre.org/techniques/T1552/006/"],
             )
@@ -3431,8 +3431,8 @@ def check_gpp_passwords(ad: ADConnector) -> Tuple[List[F], Dict]:
             details.append(f"user={username}  file=...{tail}  password={decrypted}")
         findings.append(
             F(
-                "组策略密码",
-                "SYSVOL组策略中发现明文凭证(MS14-025)",
+                "GPP Passwords",
+                "Plaintext Credentials Found in SYSVOL GPP (MS14-025)",
                 "CRITICAL",
                 f"{len(result)} cpassword attribute(s) found in Group Policy Preferences XML files. "
                 "These are encrypted with a static AES key published by Microsoft -- "
@@ -3453,8 +3453,8 @@ def check_gpp_passwords(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "组策略密码",
-                "SYSVOL中未发现cpassword属性",
+                "GPP Passwords",
+                "No cpassword Attributes Found in SYSVOL",
                 "INFO",
                 "SYSVOL was accessible and no GPP cpassword attributes were detected.",
                 risk_score=0,
@@ -3490,8 +3490,8 @@ def check_adminsdholder(ad: ADConnector) -> Tuple[List[F], Dict]:
         if not ad.conn.entries:
             findings.append(
                 F(
-                    "AdminSDHolder保护",
-                    "AdminSDHolder对象不可读",
+                    "AdminSDHolder",
+                    "AdminSDHolder Object Not Readable",
                     "INFO",
                     "Could not read AdminSDHolder ACL.",
                     risk_score=0,
@@ -3529,8 +3529,8 @@ def check_adminsdholder(ad: ADConnector) -> Tuple[List[F], Dict]:
     if risky_aces:
         findings.append(
             F(
-                "AdminSDHolder保护",
-                "AdminSDHolder存在异常写入ACE（SDProp持久化风险）",
+                "AdminSDHolder",
+                "Unexpected Write ACEs on AdminSDHolder (SDProp Persistence)",
                 "CRITICAL",
                 f"{len(risky_aces)} non-privileged principal(s) have write permissions on AdminSDHolder. "
                 "SDProp propagates these ACEs to ALL protected group members every 60 minutes, "
@@ -3551,8 +3551,8 @@ def check_adminsdholder(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "AdminSDHolder保护",
-                "AdminSDHolder ACL——无异常权限",
+                "AdminSDHolder",
+                "AdminSDHolder ACL -- No Unexpected Permissions",
                 "INFO",
                 "No non-privileged principals have write access to AdminSDHolder.",
                 risk_score=0,
@@ -3585,8 +3585,8 @@ def check_sid_history(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not results:
         findings.append(
             F(
-                "SID历史记录",
-                "无账户存在SID历史记录",
+                "SID History",
+                "No Accounts with SID History",
                 "INFO",
                 "No user or computer accounts have the sIDHistory attribute populated.",
                 risk_score=0,
@@ -3608,8 +3608,8 @@ def check_sid_history(ad: ADConnector) -> Tuple[List[F], Dict]:
     if priv_hits:
         findings.append(
             F(
-                "SID历史记录",
-                "账户sIDHistory中包含特权SID（检测到后门）",
+                "SID History",
+                "Accounts with Privileged SIDs in sIDHistory (Backdoor Detected)",
                 "CRITICAL",
                 f"{len(priv_hits)} account(s) carry privileged domain SIDs in sIDHistory. "
                 "These accounts effectively hold the privileges of the injected SID without "
@@ -3629,7 +3629,7 @@ def check_sid_history(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "LOW" if not priv_hits else "INFO"
         findings.append(
             F(
-                "SID历史记录",
+                "SID History",
                 "Accounts with Non-Privileged SID History Entries",
                 sev,
                 f"{len(normal_hits)} account(s) have non-privileged SID history entries. "
@@ -3674,8 +3674,8 @@ def check_shadow_credentials(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not total:
         findings.append(
             F(
-                "影子凭据",
-                "未检测到异常的msDS-KeyCredentialLink条目",
+                "Shadow Credentials",
+                "No Unexpected msDS-KeyCredentialLink Entries Detected",
                 "INFO",
                 "No user or computer accounts have msDS-KeyCredentialLink set "
                 "(or entries are only on DCs as expected for Windows Hello for Business).",
@@ -3704,8 +3704,8 @@ def check_shadow_credentials(ad: ADConnector) -> Tuple[List[F], Dict]:
     if admin_hits:
         findings.append(
             F(
-                "影子凭据",
-                "管理员账户配置了msDS-KeyCredentialLink（影子凭据）",
+                "Shadow Credentials",
+                "Admin Accounts with msDS-KeyCredentialLink Set (Shadow Credentials)",
                 "CRITICAL",
                 f"{len(admin_hits)} privileged account(s) have shadow credentials. "
                 "An attacker who set these entries can authenticate as the account via PKINIT "
@@ -3728,7 +3728,7 @@ def check_shadow_credentials(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "HIGH" if not admin_hits else "MEDIUM"
         findings.append(
             F(
-                "影子凭据",
+                "Shadow Credentials",
                 "Non-Admin Accounts with msDS-KeyCredentialLink Set",
                 sev,
                 f"{len(all_hits)} non-admin account(s) or computer(s) have shadow credentials set. "
@@ -3809,7 +3809,7 @@ def check_rc4_encryption(ad: ADConnector) -> Tuple[List[F], Dict]:
         sev = "CRITICAL" if any("[ADMIN]" in h for h in svc_rc4_hits) else "HIGH"
         findings.append(
             F(
-                "Kerberos加密",
+                "Kerberos Encryption",
                 "Service Accounts Permitting RC4 Kerberos Encryption",
                 sev,
                 f"{len(svc_rc4_hits)} service account(s) with SPNs accept RC4-HMAC Kerberos tickets. "
@@ -3828,8 +3828,8 @@ def check_rc4_encryption(ad: ADConnector) -> Tuple[List[F], Dict]:
     if dc_rc4_hits:
         findings.append(
             F(
-                "Kerberos加密",
-                "域控制器允许RC4 Kerberos加密",
+                "Kerberos Encryption",
+                "Domain Controllers Permitting RC4 Kerberos Encryption",
                 "MEDIUM",
                 f"{len(dc_rc4_hits)} DC(s) have RC4 in their supported encryption types, "
                 "allowing clients to negotiate weaker RC4 tickets.",
@@ -3845,13 +3845,13 @@ def check_rc4_encryption(ad: ADConnector) -> Tuple[List[F], Dict]:
     if admin_noaes_hits:
         findings.append(
             F(
-                "Kerberos加密",
-                "管理员账户明确配置为不支持AES Kerberos加密",
+                "Kerberos Encryption",
+                "Admin Accounts Explicitly Configured Without AES Kerberos Support",
                 "HIGH",
                 f"{len(admin_noaes_hits)} privileged account(s) have msDS-SupportedEncryptionTypes "
                 "set without any AES bits, forcing legacy encryption for admin sessions.",
                 details=admin_noaes_hits,
-                recommendation="在所有管理员账户上设置AES128+AES256加密类型。",
+                recommendation="Set AES128+AES256 encryption types on all admin accounts.",
                 risk_score=12,
             )
         )
@@ -3859,8 +3859,8 @@ def check_rc4_encryption(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not svc_rc4_hits and not dc_rc4_hits and not admin_noaes_hits:
         findings.append(
             F(
-                "Kerberos加密",
-                "未检测到仅RC4的Kerberos配置",
+                "Kerberos Encryption",
+                "No RC4-Only Kerberos Configurations Detected",
                 "INFO",
                 "All checked accounts and DCs appear to support AES Kerberos encryption.",
                 risk_score=0,
@@ -3908,8 +3908,8 @@ def check_foreign_security_principals(ad: ADConnector) -> Tuple[List[F], Dict]:
     if hits:
         findings.append(
             F(
-                "外部安全主体",
-                "特权组中存在外部安全主体",
+                "Foreign Security Principals",
+                "Foreign Security Principals in Privileged Groups",
                 "CRITICAL",
                 f"{len(hits)} FSP(s) from trusted domains are members of sensitive local groups. "
                 "Compromising the source domain or trust grants immediate privilege in this domain.",
@@ -3926,8 +3926,8 @@ def check_foreign_security_principals(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "外部安全主体",
-                "特权组中无外部安全主体",
+                "Foreign Security Principals",
+                "No Foreign Security Principals in Privileged Groups",
                 "INFO",
                 "No FSPs from trusted domains were found in sensitive groups.",
                 risk_score=0,
@@ -3950,8 +3950,8 @@ def check_pre_windows_2000(ad: ADConnector) -> Tuple[List[F], Dict]:
     if not grp:
         findings.append(
             F(
-                "预Win2000访问",
-                "未找到预Windows 2000兼容组",
+                "Pre-Win2k Access",
+                "Pre-Windows 2000 Group Not Found",
                 "INFO",
                 "Could not locate the Pre-Windows 2000 Compatible Access group.",
                 risk_score=0,
@@ -3977,7 +3977,7 @@ def check_pre_windows_2000(ad: ADConnector) -> Tuple[List[F], Dict]:
             who.append("Anonymous Logon (S-1-5-7)")
         findings.append(
             F(
-                "预Win2000访问",
+                "Pre-Win2k Access",
                 "Pre-Windows 2000 Group Grants Unauthenticated Enumeration",
                 sev,
                 f"The Pre-Windows 2000 Compatible Access group contains {', '.join(who)}. "
@@ -3996,8 +3996,8 @@ def check_pre_windows_2000(ad: ADConnector) -> Tuple[List[F], Dict]:
     elif auth:
         findings.append(
             F(
-                "预Win2000访问",
-                "预Windows 2000兼容组包含已认证用户",
+                "Pre-Win2k Access",
+                "Pre-Windows 2000 Group Contains Authenticated Users",
                 "MEDIUM",
                 "Authenticated Users in this group broadens SAMR enumeration rights beyond "
                 "what modern AD requires.",
@@ -4012,20 +4012,20 @@ def check_pre_windows_2000(ad: ADConnector) -> Tuple[List[F], Dict]:
     elif members:
         findings.append(
             F(
-                "预Win2000访问",
-                "预Windows 2000兼容组存在非标准成员",
+                "Pre-Win2k Access",
+                "Pre-Windows 2000 Group Has Non-Standard Members",
                 "LOW",
                 f"{len(members)} member(s) found. Verify each is required.",
                 details=members[:20],
-                recommendation="移除所有成员，除非遗留应用程序需要。",
+                recommendation="Remove all members unless required by legacy applications.",
                 risk_score=3,
             )
         )
     else:
         findings.append(
             F(
-                "预Win2000访问",
-                "预Windows 2000兼容访问组为空",
+                "Pre-Win2k Access",
+                "Pre-Windows 2000 Compatible Access Group Is Empty",
                 "INFO",
                 "No members found -- good.",
                 risk_score=0,
@@ -4091,8 +4091,8 @@ def check_dangerous_delegation_targets(ad: ADConnector) -> Tuple[List[F], Dict]:
     if high_value_hits:
         findings.append(
             F(
-                "委派配置",
-                "域控制器上高价值服务的约束委派配置",
+                "Delegation",
+                "Constrained Delegation to High-Value Services on Domain Controllers",
                 "CRITICAL",
                 f"{len(high_value_hits)} account(s) are configured to delegate to sensitive services "
                 f"(ldap, cifs, host, gc, krbtgt) on Domain Controllers. "
@@ -4115,8 +4115,8 @@ def check_dangerous_delegation_targets(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "委派配置",
-                "未检测到危险的约束委派目标",
+                "Delegation",
+                "No Dangerous Constrained Delegation Targets Detected",
                 "INFO",
                 "No accounts delegate to sensitive services (ldap/cifs/host/gc) on Domain Controllers.",
                 risk_score=0,
@@ -4154,8 +4154,8 @@ def check_orphaned_subnets(ad: ADConnector) -> Tuple[List[F], Dict]:
     if orphaned:
         findings.append(
             F(
-                "站点拓扑",
-                "AD子网未关联到任何站点",
+                "Site Topology",
+                "AD Subnets Not Associated with Any Site",
                 "LOW",
                 f"{len(orphaned)} of {len(subnets)} subnet(s) have no site assignment. "
                 "Clients from these subnets will receive a suboptimal (random) DC, "
@@ -4173,8 +4173,8 @@ def check_orphaned_subnets(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "站点拓扑",
-                "所有AD子网均已分配到站点",
+                "Site Topology",
+                "All AD Subnets Are Assigned to a Site",
                 "INFO",
                 f"All {len(subnets)} subnet(s) are correctly mapped to AD sites.",
                 risk_score=0,
@@ -4219,8 +4219,8 @@ def check_frs_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
     if using_frs:
         findings.append(
             F(
-                "SYSVOL复制",
-                "SYSVOL仍使用遗留FRS进行复制",
+                "SYSVOL Replication",
+                "SYSVOL Still Replicating via Legacy FRS (File Replication Service)",
                 "HIGH",
                 "FRS was deprecated in Windows Server 2008 R2 and is no longer supported. "
                 "FRS replication is unreliable and cannot be monitored with modern tools. "
@@ -4239,8 +4239,8 @@ def check_frs_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
     elif mixed_mode:
         findings.append(
             F(
-                "SYSVOL复制",
-                "SYSVOL向DFSR迁移似乎未完成",
+                "SYSVOL Replication",
+                "SYSVOL Migration to DFSR Appears Incomplete",
                 "MEDIUM",
                 "Both FRS subscriber objects and DFSR subscription objects exist. "
                 "The SYSVOL migration may be stalled mid-phase.",
@@ -4254,8 +4254,8 @@ def check_frs_replication(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "SYSVOL复制",
-                "SYSVOL使用DFSR复制（现代方式）",
+                "SYSVOL Replication",
+                "SYSVOL Replication Uses DFSR (Modern)",
                 "INFO",
                 "No legacy FRS subscriber objects detected. DFSR is in use.",
                 risk_score=0,
@@ -4307,8 +4307,8 @@ def check_rbcd_on_domain(ad: ADConnector) -> Tuple[List[F], Dict]:
 
         findings.append(
             F(
-                "委派配置",
-                "域对象上配置了RBCD——完整域沦陷路径",
+                "Delegation",
+                "RBCD Configured on Domain Object -- Full Domain Compromise Path",
                 "CRITICAL",
                 "msDS-AllowedToActOnBehalfOfOtherIdentity is set on the domain NC head object. "
                 "Any principal in this RBCD ACL can impersonate ANY domain user to ANY service "
@@ -4326,8 +4326,8 @@ def check_rbcd_on_domain(ad: ADConnector) -> Tuple[List[F], Dict]:
     else:
         findings.append(
             F(
-                "委派配置",
-                "域对象上未配置RBCD",
+                "Delegation",
+                "No RBCD Configured on Domain Object",
                 "INFO",
                 "msDS-AllowedToActOnBehalfOfOtherIdentity is not set on the domain NC head.",
                 risk_score=0,
@@ -4352,8 +4352,8 @@ def check_rbcd_on_domain(ad: ADConnector) -> Tuple[List[F], Dict]:
         ]
         findings.append(
             F(
-                "委派配置",
-                "域控制器计算机对象上直接配置了RBCD",
+                "Delegation",
+                "RBCD Configured Directly on Domain Controller Computer Objects",
                 "CRITICAL",
                 f"{len(dc_rbcd)} Domain Controller(s) have RBCD set. "
                 "Any account in the RBCD ACL can impersonate any domain user to the DC, "

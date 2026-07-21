@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-AD 安全扫描器 - 程序入口
+AD Security Scanner - Entry Point
 
-使用示例
+Usage examples
 ──────────────
-  # 使用明文密码（原有行为，保持不变）
+  # Plaintext password (existing behaviour, unchanged)
   python ADPulse.py --domain corp.local --user admin --password 'P@ssw0rd!'
 
-  # 仅使用 NT 哈希（哈希传递攻击）
+  # NT hash only (pass-the-hash)
   python ADPulse.py --domain corp.local --user admin --hash 31d6cfe0d16ae931b73c59d7e0c089c0
 
-  # LM:NT 哈希对（哈希传递攻击）
+  # LM:NT hash pair (pass-the-hash)
   python ADPulse.py --domain corp.local --user admin --hash aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0
 
-  # 指定域控制器并仅生成 HTML 报告
+  # With explicit DC and HTML-only report
   python ADPulse.py --domain corp.local --user admin --hash <NT> \
       --dc-ip 10.0.0.1 --report html
 """
@@ -31,39 +31,39 @@ from report import print_report, export_json, export_html
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="ADPulse — 开源 Active Directory 安全扫描工具",
+        description="ADPulse — Open-Source Active Directory Security Scanner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
 
     p.add_argument("--domain",     required=True,
-                   help="目标 AD 域名（例如 corp.local）")
+                   help="Target AD domain (e.g. corp.local)")
     p.add_argument("--user",       required=True,
-                   help="域用户名（SAM 账户名）")
+                   help="Domain username (SAM account name)")
     p.add_argument("--dc-ip",
-                   help="域控制器 IP 地址（省略时自动通过 DNS 解析）")
+                   help="Domain Controller IP (auto-resolved via DNS if omitted)")
     p.add_argument("--report",
                    choices=["console", "json", "html", "all"], default="all",
-                   help="生成报告的格式（默认：all 全部生成）")
+                   help="Report format(s) to produce (default: all)")
     p.add_argument("--output-dir", default=".",
-                   help="Reports/ 文件夹的父目录（默认：当前目录）")
+                   help="Parent directory for the Reports/ folder (default: current dir)")
     p.add_argument("--no-color",   action="store_true",
-                   help="禁用 ANSI 彩色输出")
+                   help="Disable ANSI colour output")
 
-    # ── 凭证组：密码或哈希，二选一必填 ──────────────
+    # ── Credential group: password OR hash, exactly one required ──────────────
     creds = p.add_mutually_exclusive_group(required=True)
     creds.add_argument(
         "--password",
         metavar="PASSWORD",
-        help="明文域密码",
+        help="Plaintext domain password",
     )
     creds.add_argument(
         "--hash", "-H",
         metavar="[LMHASH:]NTHASH",
         dest="hash",
         help=(
-            "用于哈希传递认证的 NT 哈希（或 LM:NT 对）。"
-            "NT 哈希为 32 位十六进制字符串，例如："
+            "NT hash (or LM:NT pair) for pass-the-hash authentication. "
+            "The NT hash is a 32-character hex string, e.g. "
             "31d6cfe0d16ae931b73c59d7e0c089c0"
         ),
     )
@@ -75,20 +75,20 @@ def main() -> None:
     parser = _build_parser()
     args   = parser.parse_args()
 
-    # ── 颜色初始化 ───────────────────────────────────────────────────────────
+    # ── Colour init ───────────────────────────────────────────────────────────
     try:
         from colorama import init as cinit
         cinit(autoreset=True, strip=args.no_color)
     except ImportError:
         pass
 
-    # ── 横幅 ────────────────────────────────────────────────────────────────
+    # ── Banner ────────────────────────────────────────────────────────────────
     print("╔═══════════════════════════════════════════╗")
-    print("║   ADPulse 活动目录安全扫描工具            ║")
-    print("║                版本 1.0                   ║")
+    print("║ ADPulse Active Directory Security Scanner ║")
+    print("║                version 1.0                ║")
     print("╚═══════════════════════════════════════════╝\n")
 
-    # ── 凭证处理 ───────────────────────────────────────────────────────────
+    # ── Credential handling ───────────────────────────────────────────────────
     password = ""
     lm_hash  = b""
     nt_hash  = b""
@@ -106,14 +106,14 @@ def main() -> None:
 
     print(f"[+] 认证方式         : {auth_desc}")
 
-    # ── 域控制器解析 ─────────────────────────────────────────────────────────
+    # ── DC resolution ─────────────────────────────────────────────────────────
     dc_ip = args.dc_ip or resolve_dc(args.domain)
     if not dc_ip:
         print("[!] 无法解析域控制器（DC）。请使用--dc-ip参数来明确指定一个域控制器。")
         sys.exit(1)
     print(f"[+] 域控制器IP地址 : {dc_ip}")
 
-    # ── 建立连接 ─────────────────────────────────────────────────────────────
+    # ── Connect ───────────────────────────────────────────────────────────────
     ad = ADConnector(
         dc_ip    = dc_ip,
         domain   = args.domain,
@@ -127,10 +127,10 @@ def main() -> None:
         sys.exit(1)
     print(f"[+] LDAP 绑定认证成功\n")
 
-    # ── 执行安全检测 ─────────────────────────────────────────────────────────
+    # ── Run checks ────────────────────────────────────────────────────────────
     findings, stats = run_all_checks(ad)
 
-    # ── 构建扫描结果 ─────────────────────────────────────────────────────────
+    # ── Build result ──────────────────────────────────────────────────────────
     result = ScanResult(
         domain    = args.domain,
         scan_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -139,7 +139,7 @@ def main() -> None:
         stats     = stats,
     )
 
-    # ── 输出报告 ─────────────────────────────────────────────────────────────
+    # ── Output ────────────────────────────────────────────────────────────────
     out = Path(args.output_dir) / "Reports"
     out.mkdir(parents=True, exist_ok=True)
     ts  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
